@@ -1,781 +1,703 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  BookOpen, Lock, Unlock, CheckCircle2, PlayCircle, Users, Settings,
-  Plus, Trash2, Copy, Check, ChevronLeft, Menu, X, Phone, ShieldCheck,
-  KeyRound, LogOut, Loader2
-} from "lucide-react";
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Elfishawy - منصة اللغة الإنجليزية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Translator for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        h1, h2, h3, h4, .font-cairo { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#EEF0EA]" style="background-image: linear-gradient(rgba(22,48,42,0.05) 1px, transparent 1px); background-size: 100% 28px;">
+    <div id="root"></div>
 
-const STORAGE_KEY = "platform-data";
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
 
-function genId(prefix) {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
+        const STORAGE_KEY = "platform-data";
 
-function genCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let s = "";
-  for (let i = 0; i < 8; i++) {
-    if (i === 4) s += "-";
-    s += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `EF-${s}`;
-}
+        function genId(prefix) {
+            return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        }
 
-const DEFAULT_DATA = {
-  adminPassword: "admin123",
-  contact: { phones: ["01000000000"], note: "للتواصل والاستفسار واتساب أو اتصال" },
-  lessons: [
-    { id: genId("l"), title: "Present Simple", description: "شرح زمن المضارع البسيط مع أمثلة", videoUrl: "" },
-    { id: genId("l"), title: "Past Simple", description: "شرح زمن الماضي البسيط", videoUrl: "" },
-  ],
-  students: [],
-  access: {},
-  codes: [],
-};
+        function genCode() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let s = "";
+            for (let i = 0; i < 8; i++) {
+                if (i === 4) s += "-";
+                s += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return `EF-${s}`;
+        }
 
-function accessKey(studentId, lessonId) {
-  return `${studentId}::${lessonId}`;
-}
+        const DEFAULT_DATA = {
+            adminPassword: "admin123",
+            contact: { phones: ["01000000000"], note: "للتواصل والاستفسار واتساب أو اتصال" },
+            lessons: [
+                { id: genId("l"), title: "Present Simple", description: "شرح زمن المضارع البسيط مع أمثلة", videoUrl: "" },
+                { id: genId("l"), title: "Past Simple", description: "شرح زمن الماضي البسيط", videoUrl: "" },
+            ],
+            students: [],
+            access: {},
+            codes: [],
+        };
 
-function useFonts() {
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap";
-    document.head.appendChild(link);
-    return () => document.head.removeChild(link);
-  }, []);
-}
+        function accessKey(studentId, lessonId) {
+            return `${studentId}::${lessonId}`;
+        }
 
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((resolve) => setTimeout(() => resolve(undefined), ms)),
-  ]);
-}
+        function loadPlatformData() {
+            try {
+                const res = localStorage.getItem(STORAGE_KEY);
+                if (res) return JSON.parse(res);
+            } catch (e) {}
+            return null;
+        }
 
-async function loadPlatformData() {
-  if (typeof window === "undefined" || !window.storage) return null;
-  try {
-    const res = await withTimeout(window.storage.get(STORAGE_KEY, true), 4000);
-    if (res && res.value) return JSON.parse(res.value);
-  } catch (e) {
-    // key doesn't exist yet, or storage unavailable
-  }
-  return null;
-}
+        function savePlatformData(data) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {}
+        }
 
-async function savePlatformData(data) {
-  if (typeof window === "undefined" || !window.storage) return false;
-  try {
-    const res = await withTimeout(window.storage.set(STORAGE_KEY, JSON.stringify(data), true), 4000);
-    return !!res;
-  } catch (e) {
-    console.error("Storage error:", e);
-    return false;
-  }
-}
+        function Field({ label, ...props }) {
+            return (
+                <label className="block mb-3 text-right">
+                    <span className="block text-sm font-bold mb-1" style={{ color: "#16302A" }}>{label}</span>
+                    <input
+                        {...props}
+                        className="w-full rounded-lg px-4 py-2.5 outline-none text-right focus:ring-2"
+                        style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#FDFBF4", color: "#16302A" }}
+                    />
+                </label>
+            );
+        }
 
-function Field({ label, ...props }) {
-  return (
-    <label className="block mb-3 text-right">
-      <span className="block text-sm font-bold mb-1" style={{ color: "#16302A" }}>{label}</span>
-      <input
-        {...props}
-        className="w-full rounded-lg px-4 py-2.5 outline-none text-right focus:ring-2"
-        style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#FDFBF4", color: "#16302A" }}
-      />
-    </label>
-  );
-}
+        function Button({ children, variant = "primary", className = "", ...props }) {
+            const styles = {
+                primary: { background: "#16302A", color: "#FDFBF4" },
+                accent: { background: "#F2C744", color: "#16302A" },
+                outline: { background: "transparent", color: "#16302A", border: "2px solid #16302A" },
+                danger: { background: "#E85C41", color: "#FDFBF4" },
+            };
+            return (
+                <button
+                    {...props}
+                    className={`rounded-full px-5 py-2.5 font-bold text-sm transition-transform active:translate-y-px disabled:opacity-50 ${className}`}
+                    style={styles[variant]}
+                >
+                    {children}
+                </button>
+            );
+        }
 
-function Button({ children, variant = "primary", className = "", ...props }) {
-  const styles = {
-    primary: { background: "#16302A", color: "#FDFBF4" },
-    accent: { background: "#F2C744", color: "#16302A" },
-    outline: { background: "transparent", color: "#16302A", border: "2px solid #16302A" },
-    danger: { background: "#E85C41", color: "#FDFBF4" },
-  };
-  return (
-    <button
-      {...props}
-      className={`rounded-full px-5 py-2.5 font-bold text-sm transition-transform active:translate-y-px disabled:opacity-50 ${className}`}
-      style={styles[variant]}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Header({ view, onNav, loggedInLabel, onLogout }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  return (
-    <header className="sticky top-0 z-20" style={{ background: "#16302A", borderBottom: "3px solid #F2C744" }}>
-      <div className="max-w-6xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
-        <button onClick={() => onNav("landing")} className="flex items-center gap-2">
-          <BookOpen size={26} style={{ color: "#F2C744" }} />
-          <span className="text-xl font-extrabold text-white" style={{ fontFamily: "Cairo, sans-serif" }}>
-            English Elfishawy
-          </span>
-        </button>
-        <div className="hidden md:flex items-center gap-4">
-          {loggedInLabel ? (
-            <>
-              <span className="text-white/80 text-sm font-bold">{loggedInLabel}</span>
-              <button onClick={onLogout} className="flex items-center gap-1 text-sm font-bold text-white/90 hover:text-[#F2C744]">
-                <LogOut size={16} /> خروج
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => onNav("studentLogin")} className="text-sm font-bold text-white/90 hover:text-[#F2C744]">
-                دخول الطالب
-              </button>
-              <button onClick={() => onNav("adminLogin")} className="text-sm font-bold text-white/90 hover:text-[#F2C744]">
-                دخول الأدمن
-              </button>
-            </>
-          )}
-        </div>
-        <button className="md:hidden text-white" onClick={() => setMenuOpen((v) => !v)} aria-label="القائمة">
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-      {menuOpen && (
-        <div className="md:hidden px-5 pb-4 flex flex-col gap-3 text-white/90 font-bold">
-          {loggedInLabel ? (
-            <>
-              <span className="text-sm">{loggedInLabel}</span>
-              <button onClick={onLogout} className="text-right">خروج</button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => { onNav("studentLogin"); setMenuOpen(false); }} className="text-right">دخول الطالب</button>
-              <button onClick={() => { onNav("adminLogin"); setMenuOpen(false); }} className="text-right">دخول الأدمن</button>
-            </>
-          )}
-        </div>
-      )}
-    </header>
-  );
-}
-
-function ContactBar({ contact }) {
-  if (!contact || !contact.phones?.length) return null;
-  return (
-    <div className="py-3 text-center text-sm" style={{ background: "#F2C744", color: "#16302A" }}>
-      <span className="font-bold">{contact.note || "للتواصل"}: </span>
-      {contact.phones.map((p, i) => (
-        <span key={i} className="font-extrabold mx-2">{p}</span>
-      ))}
-    </div>
-  );
-}
-
-function Landing({ onNav, contact }) {
-  return (
-    <div>
-      <section className="pt-16 pb-12 text-center px-5">
-        <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full text-sm font-bold" style={{ background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}>
-          <ShieldCheck size={14} style={{ color: "#E85C41" }} />
-          حصص محمية بكود لكل طالب
-        </div>
-        <h1 className="text-4xl md:text-6xl font-extrabold leading-tight" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-          منصة English Elfishawy
-        </h1>
-        <p className="mt-6 max-w-xl mx-auto text-lg" style={{ color: "#4A473D" }}>
-          دروس اللغة الإنجليزية أونلاين، كل حصة بتتفتح لطالبها بكود خاص من الأستاذ.
-        </p>
-        <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-          <Button variant="primary" onClick={() => onNav("studentLogin")}>دخول طالب</Button>
-          <Button variant="outline" onClick={() => onNav("studentSignup")}>عمل حساب جديد</Button>
-        </div>
-      </section>
-      <ContactBar contact={contact} />
-    </div>
-  );
-}
-
-function StudentLogin({ students, onLogin, onNav }) {
-  const [fullName, setFullName] = useState("");
-  const [studentNumber, setStudentNumber] = useState("");
-  const [parentNumber, setParentNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const submit = () => {
-    setError("");
-    const match = students.find(
-      (s) =>
-        s.fullName.trim() === fullName.trim() &&
-        s.studentNumber === studentNumber &&
-        s.parentNumber === parentNumber &&
-        s.password === password
-    );
-    if (!match) {
-      setError("البيانات مش مطابقة، تأكد من الاسم الثلاثي والأرقام والباسورد");
-      return;
-    }
-    onLogin(match);
-  };
-
-  return (
-    <div className="max-w-md mx-auto px-5 py-14">
-      <h2 className="text-2xl font-extrabold mb-6 text-center" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        دخول الطالب
-      </h2>
-      <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
-        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
-        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
-        <Field label="الباسورد" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="كلمة السر" />
-        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
-        <Button variant="primary" className="w-full" onClick={submit}>دخول</Button>
-        <button onClick={() => onNav("studentSignup")} className="w-full text-center text-sm font-bold mt-4" style={{ color: "#3E6E8E" }}>
-          مفيش حساب؟ اعمل حساب جديد
-        </button>
-        <button onClick={() => onNav("studentForgot")} className="w-full text-center text-sm font-bold mt-2" style={{ color: "#E85C41" }}>
-          نسيت الباسورد؟
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StudentForgotPassword({ students, onReset, onNav }) {
-  const [fullName, setFullName] = useState("");
-  const [studentNumber, setStudentNumber] = useState("");
-  const [parentNumber, setParentNumber] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const submit = () => {
-    setError("");
-    const match = students.find(
-      (s) =>
-        s.fullName.trim() === fullName.trim() &&
-        s.studentNumber === studentNumber &&
-        s.parentNumber === parentNumber
-    );
-    if (!match) {
-      setError("البيانات مش مطابقة، تأكد من الاسم الثلاثي ورقم الطالب ورقم ولي الأمر");
-      return;
-    }
-    if (!newPassword || newPassword.length < 4) {
-      setError("الباسورد الجديد لازم يكون ٤ حروف/أرقام على الأقل");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("الباسوردين مش متطابقين");
-      return;
-    }
-    onReset(match.id, newPassword);
-    setDone(true);
-  };
-
-  if (done) {
-    return (
-      <div className="max-w-md mx-auto px-5 py-14 text-center">
-        <CheckCircle2 size={40} className="mx-auto mb-4" style={{ color: "#4C8C63" }} />
-        <h2 className="text-xl font-extrabold mb-2" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-          اتغيّر الباسورد بنجاح
-        </h2>
-        <p className="text-sm mb-6" style={{ color: "#6B675C" }}>دلوقتي تقدر تدخل بالباسورد الجديد</p>
-        <Button variant="primary" onClick={() => onNav("studentLogin")}>رجوع لتسجيل الدخول</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-md mx-auto px-5 py-14">
-      <h2 className="text-2xl font-extrabold mb-2 text-center" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        نسيت الباسورد
-      </h2>
-      <p className="text-sm mb-6 text-center" style={{ color: "#6B675C" }}>
-        أكّد بياناتك الأساسية وبعدين اختار باسورد جديد
-      </p>
-      <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
-        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
-        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
-        <Field label="الباسورد الجديد" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="اختار باسورد جديد" />
-        <Field label="تأكيد الباسورد الجديد" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="اكتب نفس الباسورد" />
-        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
-        <Button variant="primary" className="w-full" onClick={submit}>تغيير الباسورد</Button>
-        <button onClick={() => onNav("studentLogin")} className="w-full text-center text-sm font-bold mt-4" style={{ color: "#3E6E8E" }}>
-          رجوع لتسجيل الدخول
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StudentSignup({ onSignup, onNav }) {
-  const [fullName, setFullName] = useState("");
-  const [studentNumber, setStudentNumber] = useState("");
-  const [parentNumber, setParentNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const submit = () => {
-    setError("");
-    const parts = fullName.trim().split(/\s+/);
-    if (parts.length < 3) {
-      setError("من فضلك اكتب الاسم ثلاثي كامل");
-      return;
-    }
-    if (!studentNumber || !parentNumber || !password) {
-      setError("لازم تملأ كل الحقول");
-      return;
-    }
-    onSignup({ fullName: fullName.trim(), studentNumber, parentNumber, password });
-  };
-
-  return (
-    <div className="max-w-md mx-auto px-5 py-14">
-      <h2 className="text-2xl font-extrabold mb-6 text-center" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        حساب جديد
-      </h2>
-      <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
-        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
-        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
-        <Field label="الباسورد" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="اختار كلمة سر" />
-        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
-        <Button variant="primary" className="w-full" onClick={submit}>إنشاء الحساب</Button>
-        <button onClick={() => onNav("studentLogin")} className="w-full text-center text-sm font-bold mt-4" style={{ color: "#3E6E8E" }}>
-          عندك حساب؟ سجل دخولك
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StudentDashboard({ student, lessons, access, onRedeem, onOpenLesson }) {
-  const [codeInputs, setCodeInputs] = useState({});
-  const [msg, setMsg] = useState({});
-
-  const submitCode = (lessonId) => {
-    const code = (codeInputs[lessonId] || "").trim();
-    if (!code) return;
-    const result = onRedeem(lessonId, code);
-    setMsg((m) => ({ ...m, [lessonId]: result }));
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto px-5 py-10">
-      <h2 className="text-2xl font-extrabold mb-1" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        أهلاً {student.fullName.split(" ")[0]} 👋
-      </h2>
-      <p className="text-sm mb-6" style={{ color: "#6B675C" }}>
-        كود حسابك الخاص: <span className="font-extrabold" style={{ color: "#3E6E8E" }}>{student.code}</span>
-      </p>
-
-      <div className="grid gap-4">
-        {lessons.map((lesson) => {
-          const status = access[accessKey(student.id, lesson.id)]?.status || "locked";
-          return (
-            <div key={lesson.id} className="rounded-xl p-5" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {status === "locked" && <Lock size={20} style={{ color: "#B8B29E" }} />}
-                  {status === "unlocked" && <Unlock size={20} style={{ color: "#3E6E8E" }} />}
-                  {status === "completed" && <CheckCircle2 size={20} style={{ color: "#4C8C63" }} />}
-                  <div>
-                    <h3 className="font-bold" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>{lesson.title}</h3>
-                    <p className="text-sm" style={{ color: "#6B675C" }}>{lesson.description}</p>
-                  </div>
-                </div>
-              </div>
-
-              {status === "locked" && (
-                <div className="mt-4 flex items-center gap-2">
-                  <input
-                    value={codeInputs[lesson.id] || ""}
-                    onChange={(e) => setCodeInputs((c) => ({ ...c, [lesson.id]: e.target.value }))}
-                    placeholder="اكتب كود الحصة هنا"
-                    className="flex-1 rounded-lg px-3 py-2 text-right outline-none"
-                    style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#F7F3E8" }}
-                  />
-                  <Button variant="accent" onClick={() => submitCode(lesson.id)}>
-                    <span className="flex items-center gap-1"><KeyRound size={16} /> فتح</span>
-                  </Button>
-                </div>
-              )}
-              {msg[lesson.id] === "invalid" && (
-                <p className="mt-2 text-sm font-bold" style={{ color: "#E85C41" }}>الكود غلط أو مستخدم قبل كده</p>
-              )}
-
-              {(status === "unlocked" || status === "completed") && (
-                <div className="mt-4">
-                  <Button variant="primary" onClick={() => onOpenLesson(lesson)}>
-                    <span className="flex items-center gap-1"><PlayCircle size={16} /> ادخل الحصة</span>
-                  </Button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function LessonView({ lesson, status, onComplete, onBack }) {
-  return (
-    <div className="max-w-3xl mx-auto px-5 py-10">
-      <button onClick={onBack} className="mb-6 inline-flex items-center gap-1 text-sm font-bold px-3 py-2 rounded-full" style={{ color: "#16302A", background: "#EAF0EE" }}>
-        <ChevronLeft size={16} /> رجوع
-      </button>
-      <div className="rounded-2xl p-6 md:p-8" style={{ background: "#16302A" }}>
-        <h2 className="text-2xl font-extrabold text-white" style={{ fontFamily: "Cairo, sans-serif" }}>{lesson.title}</h2>
-        <p className="mt-2" style={{ color: "#C9D9CE" }}>{lesson.description}</p>
-      </div>
-      <div className="mt-6 rounded-xl p-8 text-center" style={{ background: "#FDFBF4", border: "1px dashed rgba(22,48,42,0.25)" }}>
-        {lesson.videoUrl ? (
-          <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="font-bold" style={{ color: "#3E6E8E" }}>
-            افتح فيديو الحصة
-          </a>
-        ) : (
-          <p style={{ color: "#6B675C" }}>محتوى الحصة هيتضاف قريب من الأستاذ</p>
-        )}
-      </div>
-      {status !== "completed" && (
-        <div className="mt-6">
-          <Button variant="accent" onClick={onComplete}>أنهيت الحصة</Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AdminLogin({ adminPassword, onLogin }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const submit = () => {
-    if (password === adminPassword) onLogin();
-    else setError("كلمة السر غلط");
-  };
-  return (
-    <div className="max-w-sm mx-auto px-5 py-16">
-      <h2 className="text-2xl font-extrabold mb-6 text-center" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>دخول الأدمن</h2>
-      <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="كلمة السر" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
-        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
-        <Button variant="primary" className="w-full" onClick={submit}>دخول</Button>
-      </div>
-    </div>
-  );
-}
-
-function CopyableCode({ code }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (e) {}
-  };
-  return (
-    <button onClick={copy} className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md" style={{ background: "#EAF0EE", color: "#16302A" }}>
-      {copied ? <Check size={12} /> : <Copy size={12} />} {code}
-    </button>
-  );
-}
-
-function AdminStudents({ data, mutate }) {
-  const [openStudent, setOpenStudent] = useState(null);
-
-  const toggleAccess = (studentId, lessonId) => {
-    const key = accessKey(studentId, lessonId);
-    const current = data.access[key]?.status || "locked";
-    const next = current === "locked" ? "unlocked" : "locked";
-    const newAccess = { ...data.access, [key]: { status: next } };
-    mutate({ ...data, access: newAccess });
-  };
-
-  const generateCode = (studentId, lessonId) => {
-    const code = genCode();
-    const newCode = { code, studentId, lessonId, used: false, createdAt: Date.now() };
-    mutate({ ...data, codes: [...data.codes, newCode] });
-  };
-
-  const activeCodesFor = (studentId, lessonId) =>
-    data.codes.filter((c) => c.studentId === studentId && c.lessonId === lessonId && !c.used);
-
-  return (
-    <div>
-      <h3 className="text-lg font-extrabold mb-4" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        الطلاب ({data.students.length})
-      </h3>
-      {data.students.length === 0 && <p style={{ color: "#6B675C" }}>لسه مفيش طلاب عملوا حساب.</p>}
-      <div className="grid gap-3">
-        {data.students.map((s) => (
-          <div key={s.id} className="rounded-xl p-4" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-            <button className="w-full flex items-center justify-between" onClick={() => setOpenStudent(openStudent === s.id ? null : s.id)}>
-              <div className="text-right">
-                <p className="font-bold" style={{ color: "#16302A" }}>{s.fullName}</p>
-                <p className="text-xs" style={{ color: "#6B675C" }}>رقم الطالب: {s.studentNumber} — كود الحساب: {s.code}</p>
-              </div>
-              <ChevronLeft size={18} className={`transition-transform ${openStudent === s.id ? "-rotate-90" : ""}`} style={{ color: "#16302A" }} />
-            </button>
-            {openStudent === s.id && (
-              <div className="mt-4 pt-4 grid gap-3" style={{ borderTop: "1px dashed rgba(22,48,42,0.2)" }}>
-                <p className="text-xs" style={{ color: "#6B675C" }}>رقم ولي الأمر: {s.parentNumber}</p>
-                {data.lessons.map((l) => {
-                  const status = data.access[accessKey(s.id, l.id)]?.status || "locked";
-                  const codes = activeCodesFor(s.id, l.id);
-                  return (
-                    <div key={l.id} className="flex items-center justify-between flex-wrap gap-2 rounded-lg px-3 py-2" style={{ background: "#F7F3E8" }}>
-                      <div>
-                        <span className="font-bold text-sm" style={{ color: "#16302A" }}>{l.title}</span>
-                        <span className="text-xs mr-2" style={{ color: status === "locked" ? "#B8B29E" : "#4C8C63" }}>
-                          {status === "locked" ? "مقفولة" : status === "unlocked" ? "مفتوحة" : "خلصها"}
-                        </span>
-                        {codes.length > 0 && (
-                          <div className="mt-1 flex gap-1 flex-wrap">
-                            {codes.map((c) => <CopyableCode key={c.code} code={c.code} />)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={() => generateCode(s.id, l.id)}>
-                          <span className="flex items-center gap-1 text-xs"><KeyRound size={14} /> كود جديد</span>
-                        </Button>
-                        <Button variant={status === "locked" ? "accent" : "danger"} onClick={() => toggleAccess(s.id, l.id)}>
-                          <span className="flex items-center gap-1 text-xs">
-                            {status === "locked" ? <><Unlock size={14} /> فتح مباشر</> : <><Lock size={14} /> قفل</>}
-                          </span>
-                        </Button>
-                      </div>
+        function Header({ onNav, loggedInLabel, onLogout }) {
+            const [menuOpen, setMenuOpen] = useState(false);
+            return (
+                <header className="sticky top-0 z-20" style={{ background: "#16302A", borderBottom: "3px solid #F2C744" }}>
+                    <div className="max-w-6xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
+                        <button onClick={() => onNav("landing")} className="flex items-center gap-2">
+                            <span className="text-xl font-extrabold text-[#F2C744] font-cairo">English Elfishawy</span>
+                        </button>
+                        <div className="hidden md:flex items-center gap-4">
+                            {loggedInLabel ? (
+                                <>
+                                    <span className="text-white/80 text-sm font-bold">{loggedInLabel}</span>
+                                    <button onClick={onLogout} className="text-sm font-bold text-white/90 hover:text-[#F2C744]">خروج</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => onNav("studentLogin")} className="text-sm font-bold text-white/90 hover:text-[#F2C744]">دخول الطالب</button>
+                                    <button onClick={() => onNav("adminLogin")} className="text-sm font-bold text-white/90 hover:text-[#F2C744]">دخول الأدمن</button>
+                                </>
+                            )}
+                        </div>
+                        <button className="md:hidden text-white font-bold" onClick={() => setMenuOpen(!menuOpen)}>القائمة</button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+                    {menuOpen && (
+                        <div className="md:hidden px-5 pb-4 flex flex-col gap-3 text-white/90 font-bold border-t border-white/10 pt-2">
+                            {loggedInLabel ? (
+                                <>
+                                    <span className="text-sm">{loggedInLabel}</span>
+                                    <button onClick={() => { onLogout(); setMenuOpen(false); }} className="text-right">خروج</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => { onNav("studentLogin"); setMenuOpen(false); }} className="text-right">دخول الطالب</button>
+                                    <button onClick={() => { onNav("adminLogin"); setMenuOpen(false); }} className="text-right">دخول الأدمن</button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </header>
+            );
+        }
 
-function AdminLessons({ data, mutate }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+        function ContactBar({ contact }) {
+            if (!contact || !contact.phones?.length) return null;
+            return (
+                <div className="py-3 text-center text-sm" style={{ background: "#F2C744", color: "#16302A" }}>
+                    <span className="font-bold">{contact.note || "للتواصل"}: </span>
+                    {contact.phones.map((p, i) => (
+                        <span key={i} className="font-extrabold mx-2">{p}</span>
+                    ))}
+                </div>
+            );
+        }
 
-  const addLesson = () => {
-    if (!title.trim()) return;
-    const lesson = { id: genId("l"), title: title.trim(), description: description.trim(), videoUrl: videoUrl.trim() };
-    mutate({ ...data, lessons: [...data.lessons, lesson] });
-    setTitle(""); setDescription(""); setVideoUrl("");
-  };
+        function Landing({ onNav, contact }) {
+            return (
+                <div>
+                    <section className="pt-16 pb-12 text-center px-5">
+                        <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full text-sm font-bold" style={{ background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}>
+                            🔒 حصص محمية بكود لكل طالب
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-extrabold leading-tight font-cairo" style={{ color: "#16302A" }}>
+                            منصة English Elfishawy
+                        </h1>
+                        <p className="mt-6 max-w-xl mx-auto text-lg" style={{ color: "#4A473D" }}>
+                            دروس اللغة الإنجليزية أونلاين، كل حصة بتتفتح لطالبها بكود خاص من الأستاذ.
+                        </p>
+                        <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
+                            <Button variant="primary" onClick={() => onNav("studentLogin")}>دخول طالب</Button>
+                            <Button variant="outline" onClick={() => onNav("studentSignup")}>عمل حساب جديد</Button>
+                        </div>
+                    </section>
+                    <ContactBar contact={contact} />
+                </div>
+            );
+        }
 
-  const deleteLesson = (id) => {
-    mutate({ ...data, lessons: data.lessons.filter((l) => l.id !== id) });
-  };
+        function StudentLogin({ students, onLogin, onNav }) {
+            const [fullName, setFullName] = useState("");
+            const [studentNumber, setStudentNumber] = useState("");
+            const [parentNumber, setParentNumber] = useState("");
+            const [password, setPassword] = useState("");
+            const [error, setError] = useState("");
 
-  return (
-    <div>
-      <h3 className="text-lg font-extrabold mb-4" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>الحصص</h3>
-      <div className="rounded-xl p-4 mb-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="عنوان الحصة" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: Present Continuous" />
-        <Field label="وصف مختصر" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="عن إيه الحصة" />
-        <Field label="لينك الفيديو (اختياري)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://" />
-        <Button variant="primary" onClick={addLesson}>
-          <span className="flex items-center gap-1"><Plus size={16} /> إضافة حصة</span>
-        </Button>
-      </div>
-      <div className="grid gap-3">
-        {data.lessons.map((l) => (
-          <div key={l.id} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-            <div>
-              <p className="font-bold" style={{ color: "#16302A" }}>{l.title}</p>
-              <p className="text-sm" style={{ color: "#6B675C" }}>{l.description}</p>
-            </div>
-            <button onClick={() => deleteLesson(l.id)} aria-label="حذف">
-              <Trash2 size={18} style={{ color: "#E85C41" }} />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+            const submit = () => {
+                setError("");
+                const match = students.find(
+                    (s) =>
+                        s.fullName.trim() === fullName.trim() &&
+                        s.studentNumber === studentNumber &&
+                        s.parentNumber === parentNumber &&
+                        s.password === password
+                );
+                if (!match) {
+                    setError("البيانات مش مطابقة، تأكد من الاسم الثلاثي والأرقام والباسورد");
+                    return;
+                }
+                onLogin(match);
+            };
 
-function AdminSettings({ data, mutate }) {
-  const [phones, setPhones] = useState(data.contact.phones.join(", "));
-  const [note, setNote] = useState(data.contact.note);
-  const [newPassword, setNewPassword] = useState("");
-  const [saved, setSaved] = useState(false);
+            return (
+                <div className="max-w-md mx-auto px-5 py-14">
+                    <h2 className="text-2xl font-extrabold mb-6 text-center font-cairo" style={{ color: "#16302A" }}>دخول الطالب</h2>
+                    <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
+                        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
+                        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
+                        <Field label="الباسورد" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="كلمة السر" />
+                        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
+                        <Button variant="primary" className="w-full" onClick={submit}>دخول</Button>
+                        <button onClick={() => onNav("studentSignup")} className="w-full text-center text-sm font-bold mt-4 block" style={{ color: "#3E6E8E" }}>مفيش حساب؟ اعمل حساب جديد</button>
+                        <button onClick={() => onNav("studentForgot")} className="w-full text-center text-sm font-bold mt-2 block" style={{ color: "#E85C41" }}>نسيت الباسورد؟</button>
+                    </div>
+                </div>
+            );
+        }
 
-  const save = () => {
-    const list = phones.split(",").map((p) => p.trim()).filter(Boolean);
-    const updated = { ...data, contact: { phones: list, note } };
-    if (newPassword.trim()) updated.adminPassword = newPassword.trim();
-    mutate(updated);
-    setSaved(true);
-    setNewPassword("");
-    setTimeout(() => setSaved(false), 1500);
-  };
+        function StudentForgotPassword({ students, onReset, onNav }) {
+            const [fullName, setFullName] = useState("");
+            const [studentNumber, setStudentNumber] = useState("");
+            const [parentNumber, setParentNumber] = useState("");
+            const [newPassword, setNewPassword] = useState("");
+            const [confirmPassword, setConfirmPassword] = useState("");
+            const [error, setError] = useState("");
+            const [done, setDone] = useState(false);
 
-  return (
-    <div className="max-w-md">
-      <h3 className="text-lg font-extrabold mb-4" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>الإعدادات</h3>
-      <div className="rounded-xl p-4" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-        <Field label="نص التواصل" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Field label="أرقام التواصل (افصل بينهم بفاصلة)" value={phones} onChange={(e) => setPhones(e.target.value)} />
-        <Field label="تغيير كلمة سر الأدمن (اختياري)" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="سيب فاضي لو مش عايز تغيّر" />
-        <Button variant="primary" onClick={save}>حفظ</Button>
-        {saved && <span className="mr-3 text-sm font-bold" style={{ color: "#4C8C63" }}>اتحفظ ✓</span>}
-      </div>
-    </div>
-  );
-}
+            const submit = () => {
+                setError("");
+                const match = students.find(
+                    (s) =>
+                        s.fullName.trim() === fullName.trim() &&
+                        s.studentNumber === studentNumber &&
+                        s.parentNumber === parentNumber
+                );
+                if (!match) {
+                    setError("البيانات مش مطابقة، تأكد من الاسم الثلاثي ورقم الطالب ورقم ولي الأمر");
+                    return;
+                }
+                if (!newPassword || newPassword.length < 4) {
+                    setError("الباسورد الجديد لازم يكون ٤ حروف/أرقام على الأقل");
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    setError("الباسوردين مش متطابقين");
+                    return;
+                }
+                onReset(match.id, newPassword);
+                setDone(true);
+            };
 
-function AdminDashboard({ data, mutate }) {
-  const [tab, setTab] = useState("students");
-  const tabs = [
-    { id: "students", label: "الطلاب", icon: Users },
-    { id: "lessons", label: "الحصص", icon: BookOpen },
-    { id: "settings", label: "الإعدادات", icon: Settings },
-  ];
-  return (
-    <div className="max-w-5xl mx-auto px-5 py-10">
-      <h2 className="text-2xl font-extrabold mb-6" style={{ fontFamily: "Cairo, sans-serif", color: "#16302A" }}>
-        لوحة تحكم الأدمن
-      </h2>
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold"
-            style={tab === t.id ? { background: "#16302A", color: "#FDFBF4" } : { background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}
-          >
-            <t.icon size={15} /> {t.label}
-          </button>
-        ))}
-      </div>
-      {tab === "students" && <AdminStudents data={data} mutate={mutate} />}
-      {tab === "lessons" && <AdminLessons data={data} mutate={mutate} />}
-      {tab === "settings" && <AdminSettings data={data} mutate={mutate} />}
-    </div>
-  );
-}
+            if (done) {
+                return (
+                    <div className="max-w-md mx-auto px-5 py-14 text-center">
+                        <h2 className="text-xl font-extrabold mb-2 font-cairo" style={{ color: "#16302A" }}>اتغيّر الباسورد بنجاح ✓</h2>
+                        <p className="text-sm mb-6" style={{ color: "#6B675C" }}>دلوقتي تقدر تدخل بالباسورد الجديد</p>
+                        <Button variant="primary" onClick={() => onNav("studentLogin")}>رجوع لتسجيل الدخول</Button>
+                    </div>
+                );
+            }
 
-export default function App() {
-  useFonts();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("landing");
-  const [student, setStudent] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [activeLesson, setActiveLesson] = useState(null);
+            return (
+                <div className="max-w-md mx-auto px-5 py-14">
+                    <h2 className="text-2xl font-extrabold mb-2 text-center font-cairo" style={{ color: "#16302A" }}>نسيت الباسورد</h2>
+                    <p className="text-sm mb-6 text-center" style={{ color: "#6B675C" }}>أكّد بياناتك الأساسية وبعدين اختار باسورد جديد</p>
+                    <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
+                        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
+                        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
+                        <Field label="الباسورد الجديد" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="اختار باسورد جديد" />
+                        <Field label="تأكيد الباسورد الجديد" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="اكتب نفس الباسورد" />
+                        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
+                        <Button variant="primary" className="w-full" onClick={submit}>تغيير الباسورد</Button>
+                        <button onClick={() => onNav("studentLogin")} className="w-full text-center text-sm font-bold mt-4 block" style={{ color: "#3E6E8E" }}>رجوع لتسجيل الدخول</button>
+                    </div>
+                </div>
+            );
+        }
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const loaded = await loadPlatformData();
-      const finalData = loaded || DEFAULT_DATA;
-      if (cancelled) return;
-      setData(finalData);
-      setLoading(false);
-      if (!loaded) {
-        savePlatformData(finalData); // persist in the background, don't block the UI on it
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+        function StudentSignup({ onSignup, onNav }) {
+            const [fullName, setFullName] = useState("");
+            const [studentNumber, setStudentNumber] = useState("");
+            const [parentNumber, setParentNumber] = useState("");
+            const [password, setPassword] = useState("");
+            const [error, setError] = useState("");
 
-  const mutate = useCallback(async (newData) => {
-    setData(newData);
-    await savePlatformData(newData);
-  }, []);
+            const submit = () => {
+                setError("");
+                const parts = fullName.trim().split(/\s+/);
+                if (parts.length < 3) {
+                    setError("من فضلك اكتب الاسم ثلاثي كامل");
+                    return;
+                }
+                if (!studentNumber || !parentNumber || !password) {
+                    setError("لازم تملأ كل الحقول");
+                    return;
+                }
+                onSignup({ fullName: fullName.trim(), studentNumber, parentNumber, password });
+            };
 
-  const handleStudentSignup = async ({ fullName, studentNumber, parentNumber, password }) => {
-    const code = genCode();
-    const newStudent = { id: genId("s"), fullName, studentNumber, parentNumber, password, code, createdAt: Date.now() };
-    const newData = { ...data, students: [...data.students, newStudent] };
-    await mutate(newData);
-    setStudent(newStudent);
-    setView("studentDashboard");
-  };
+            return (
+                <div className="max-w-md mx-auto px-5 py-14">
+                    <h2 className="text-2xl font-extrabold mb-6 text-center font-cairo" style={{ color: "#16302A" }}>حساب جديد</h2>
+                    <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="الاسم ثلاثي" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="مثال: أحمد محمد علي" />
+                        <Field label="رقم الطالب" value={studentNumber} onChange={(e) => setStudentNumber(e.target.value)} placeholder="رقم الطالب" />
+                        <Field label="رقم ولي الأمر" value={parentNumber} onChange={(e) => setParentNumber(e.target.value)} placeholder="رقم ولي الأمر" />
+                        <Field label="الباسورد" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="اختار كلمة سر" />
+                        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
+                        <Button variant="primary" className="w-full" onClick={submit}>إنشاء الحساب</Button>
+                        <button onClick={() => onNav("studentLogin")} className="w-full text-center text-sm font-bold mt-4 block" style={{ color: "#3E6E8E" }}>عندك حساب؟ سجل دخولك</button>
+                    </div>
+                </div>
+            );
+        }
 
-  const handleStudentLogin = (matched) => {
-    setStudent(matched);
-    setView("studentDashboard");
-  };
+        function StudentDashboard({ student, lessons, access, onRedeem, onOpenLesson }) {
+            const [codeInputs, setCodeInputs] = useState({});
+            const [msg, setMsg] = useState({});
 
-  const handleForgotPassword = (studentId, newPassword) => {
-    const newStudents = data.students.map((s) => (s.id === studentId ? { ...s, password: newPassword } : s));
-    mutate({ ...data, students: newStudents });
-  };
+            const submitCode = (lessonId) => {
+                const code = (codeInputs[lessonId] || "").trim();
+                if (!code) return;
+                const result = onRedeem(lessonId, code);
+                setMsg((m) => ({ ...m, [lessonId]: result }));
+            };
 
-  const handleRedeem = (lessonId, codeStr) => {
-    const codeEntry = data.codes.find((c) => c.code === codeStr.toUpperCase() && !c.used);
-    if (!codeEntry || codeEntry.studentId !== student.id || codeEntry.lessonId !== lessonId) {
-      return "invalid";
-    }
-    const newCodes = data.codes.map((c) => (c.code === codeEntry.code ? { ...c, used: true } : c));
-    const newAccess = { ...data.access, [accessKey(student.id, lessonId)]: { status: "unlocked" } };
-    mutate({ ...data, codes: newCodes, access: newAccess });
-    return "ok";
-  };
+            return (
+                <div className="max-w-3xl mx-auto px-5 py-10">
+                    <h2 className="text-2xl font-extrabold mb-1 font-cairo" style={{ color: "#16302A" }}>أهلاً {student.fullName.split(" ")[0]} 👋</h2>
+                    <p className="text-sm mb-6" style={{ color: "#6B675C" }}>كود حسابك الخاص: <span className="font-extrabold" style={{ color: "#3E6E8E" }}>{student.code}</span></p>
 
-  const handleComplete = () => {
-    const newAccess = { ...data.access, [accessKey(student.id, activeLesson.id)]: { status: "completed" } };
-    mutate({ ...data, access: newAccess });
-  };
+                    <div className="grid gap-4">
+                        {lessons.map((lesson) => {
+                            const status = access[accessKey(student.id, lesson.id)]?.status || "locked";
+                            return (
+                                <div key={lesson.id} className="rounded-xl p-5" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">{status === "locked" ? "🔒" : status === "unlocked" ? "🔓" : "✅"}</span>
+                                            <div>
+                                                <h3 className="font-bold font-cairo" style={{ color: "#16302A" }}>{lesson.title}</h3>
+                                                <p className="text-sm" style={{ color: "#6B675C" }}>{lesson.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-  const logout = () => {
-    setStudent(null);
-    setIsAdmin(false);
-    setActiveLesson(null);
-    setView("landing");
-  };
+                                    {status === "locked" && (
+                                        <div className="mt-4 flex items-center gap-2">
+                                            <input
+                                                value={codeInputs[lesson.id] || ""}
+                                                onChange={(e) => setCodeInputs((c) => ({ ...c, [lesson.id]: e.target.value }))}
+                                                placeholder="اكتب كود الحصة هنا"
+                                                className="flex-1 rounded-lg px-3 py-2 text-right outline-none"
+                                                style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#F7F3E8" }}
+                                            />
+                                            <Button variant="accent" onClick={() => submitCode(lesson.id)}>🔑 فتح</Button>
+                                        </div>
+                                    )}
+                                    {msg[lesson.id] === "invalid" && (
+                                        <p className="mt-2 text-sm font-bold" style={{ color: "#E85C41" }}>الكود غلط أو مستخدم قبل كده</p>
+                                    )}
 
-  if (loading || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#EEF0EA" }}>
-        <Loader2 className="animate-spin" size={32} style={{ color: "#16302A" }} />
-      </div>
-    );
-  }
+                                    {(status === "unlocked" || status === "completed") && (
+                                        <div className="mt-4">
+                                            <Button variant="primary" onClick={() => onOpenLesson(lesson)}>▶ ادخل الحصة</Button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
 
-  const loggedInLabel = student ? `الطالب: ${student.fullName.split(" ")[0]}` : isAdmin ? "الأدمن" : null;
+        function LessonView({ lesson, status, onComplete, onBack }) {
+            return (
+                <div className="max-w-3xl mx-auto px-5 py-10">
+                    <button onClick={onBack} className="mb-6 inline-flex items-center gap-1 text-sm font-bold px-3 py-2 rounded-full" style={{ color: "#16302A", background: "#EAF0EE" }}>← رجوع</button>
+                    <div className="rounded-2xl p-6 md:p-8" style={{ background: "#16302A" }}>
+                        <h2 className="text-2xl font-extrabold text-white font-cairo">{lesson.title}</h2>
+                        <p className="mt-2" style={{ color: "#C9D9CE" }}>{lesson.description}</p>
+                    </div>
+                    <div className="mt-6 rounded-xl p-8 text-center" style={{ background: "#FDFBF4", border: "1px dashed rgba(22,48,42,0.25)" }}>
+                        {lesson.videoUrl ? (
+                            <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="font-bold underline" style={{ color: "#3E6E8E" }}>افتح فيديو الحصة</a>
+                        ) : (
+                            <p style={{ color: "#6B675C" }}>محتوى الحصة هيتضاف قريب من الأستاذ</p>
+                        )}
+                    </div>
+                    {status !== "completed" && (
+                        <div className="mt-6">
+                            <Button variant="accent" onClick={onComplete}>أنهيت الحصة</Button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
 
-  return (
-    <div dir="rtl" className="min-h-screen w-full" style={{ background: "#EEF0EA", fontFamily: "Tajawal, sans-serif", backgroundImage: "linear-gradient(rgba(22,48,42,0.05) 1px, transparent 1px)", backgroundSize: "100% 28px" }}>
-      <Header view={view} onNav={setView} loggedInLabel={loggedInLabel} onLogout={logout} />
+        function AdminLogin({ adminPassword, onLogin }) {
+            const [password, setPassword] = useState("");
+            const [error, setError] = useState("");
+            const submit = () => {
+                if (password === adminPassword) onLogin();
+                else setError("كلمة السر غلط");
+            };
+            return (
+                <div className="max-w-sm mx-auto px-5 py-16">
+                    <h2 className="text-2xl font-extrabold mb-6 text-center font-cairo" style={{ color: "#16302A" }}>دخول الأدمن</h2>
+                    <div className="rounded-2xl p-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="كلمة السر" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
+                        {error && <p className="text-sm mb-3 font-bold" style={{ color: "#E85C41" }}>{error}</p>}
+                        <Button variant="primary" className="w-full" onClick={submit}>دخول</Button>
+                    </div>
+                </div>
+            );
+        }
 
-      {view === "landing" && <Landing onNav={setView} contact={data.contact} />}
-      {view === "studentLogin" && <StudentLogin students={data.students} onLogin={handleStudentLogin} onNav={setView} />}
-      {view === "studentSignup" && <StudentSignup onSignup={handleStudentSignup} onNav={setView} />}
-      {view === "studentForgot" && <StudentForgotPassword students={data.students} onReset={handleForgotPassword} onNav={setView} />}
-      {view === "studentDashboard" && student && !activeLesson && (
-        <StudentDashboard student={student} lessons={data.lessons} access={data.access} onRedeem={handleRedeem} onOpenLesson={setActiveLesson} />
-      )}
-      {view === "studentDashboard" && student && activeLesson && (
-        <LessonView
-          lesson={activeLesson}
-          status={data.access[accessKey(student.id, activeLesson.id)]?.status}
-          onComplete={handleComplete}
-          onBack={() => setActiveLesson(null)}
-        />
-      )}
-      {view === "adminLogin" && !isAdmin && <AdminLogin adminPassword={data.adminPassword} onLogin={() => { setIsAdmin(true); setView("adminDashboard"); }} />}
-      {view === "adminDashboard" && isAdmin && <AdminDashboard data={data} mutate={mutate} />}
+        function CopyableCode({ code }) {
+            const [copied, setCopied] = useState(false);
+            const copy = async () => {
+                try {
+                    await navigator.clipboard.writeText(code);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                } catch (e) {}
+            };
+            return (
+                <button onClick={copy} className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md" style={{ background: "#EAF0EE", color: "#16302A" }}>
+                    {copied ? "✓ تم النسخ" : `📋 ${code}`}
+                </button>
+            );
+        }
 
-      <footer className="text-center py-8 text-sm" style={{ color: "#6B675C" }}>
-        English Elfishawy — نموذج تجريبي © ٢٠٢٦
-      </footer>
-    </div>
-  );
-}
+        function AdminStudents({ data, mutate }) {
+            const [openStudent, setOpenStudent] = useState(null);
+
+            const toggleAccess = (studentId, lessonId) => {
+                const key = accessKey(studentId, lessonId);
+                const current = data.access[key]?.status || "locked";
+                const next = current === "locked" ? "unlocked" : "locked";
+                const newAccess = { ...data.access, [key]: { status: next } };
+                mutate({ ...data, access: newAccess });
+            };
+
+            const generateCode = (studentId, lessonId) => {
+                const code = genCode();
+                const newCode = { code, studentId, lessonId, used: false, createdAt: Date.now() };
+                mutate({ ...data, codes: [...data.codes, newCode] });
+            };
+
+            const activeCodesFor = (studentId, lessonId) =>
+                data.codes.filter((c) => c.studentId === studentId && c.lessonId === lessonId && !c.used);
+
+            return (
+                <div>
+                    <h3 className="text-lg font-extrabold mb-4 font-cairo" style={{ color: "#16302A" }}>الطلاب ({data.students.length})</h3>
+                    {data.students.length === 0 && <p style={{ color: "#6B675C" }}>لسه مفيش طلاب عملوا حساب.</p>}
+                    <div className="grid gap-3">
+                        {data.students.map((s) => (
+                            <div key={s.id} className="rounded-xl p-4" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                                <button className="w-full flex items-center justify-between" onClick={() => setOpenStudent(openStudent === s.id ? null : s.id)}>
+                                    <div className="text-right">
+                                        <p className="font-bold" style={{ color: "#16302A" }}>{s.fullName}</p>
+                                        <p className="text-xs" style={{ color: "#6B675C" }}>رقم الطالب: {s.studentNumber} — كود الحساب: {s.code}</p>
+                                    </div>
+                                    <span className="text-sm font-bold">{openStudent === s.id ? "▲" : "▼"}</span>
+                                </button>
+                                {openStudent === s.id && (
+                                    <div className="mt-4 pt-4 grid gap-3" style={{ borderTop: "1px dashed rgba(22,48,42,0.2)" }}>
+                                        <p className="text-xs" style={{ color: "#6B675C" }}>رقم ولي الأمر: {s.parentNumber}</p>
+                                        {data.lessons.map((l) => {
+                                            const status = data.access[accessKey(s.id, l.id)]?.status || "locked";
+                                            const codes = activeCodesFor(s.id, l.id);
+                                            return (
+                                                <div key={l.id} className="flex items-center justify-between flex-wrap gap-2 rounded-lg px-3 py-2" style={{ background: "#F7F3E8" }}>
+                                                    <div>
+                                                        <span className="font-bold text-sm" style={{ color: "#16302A" }}>{l.title}</span>
+                                                        <span className="text-xs mr-2" style={{ color: status === "locked" ? "#B8B29E" : "#4C8C63" }}>
+                                                            {status === "locked" ? "(مقفولة)" : status === "unlocked" ? "(مفتوحة)" : "(خلصها)"}
+                                                        </span>
+                                                        {codes.length > 0 && (
+                                                            <div className="mt-1 flex gap-1 flex-wrap">
+                                                                {codes.map((c) => <CopyableCode key={c.code} code={c.code} />)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="outline" onClick={() => generateCode(s.id, l.id)}>🔑 كود جديد</Button>
+                                                        <Button variant={status === "locked" ? "accent" : "danger"} onClick={() => toggleAccess(s.id, l.id)}>
+                                                            {status === "locked" ? "🔓 فتح مباشر" : "🔒 قفل"}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function AdminLessons({ data, mutate }) {
+            const [title, setTitle] = useState("");
+            const [description, setDescription] = useState("");
+            const [videoUrl, setVideoUrl] = useState("");
+
+            const addLesson = () => {
+                if (!title.trim()) return;
+                const lesson = { id: genId("l"), title: title.trim(), description: description.trim(), videoUrl: videoUrl.trim() };
+                mutate({ ...data, lessons: [...data.lessons, lesson] });
+                setTitle(""); setDescription(""); setVideoUrl("");
+            };
+
+            const deleteLesson = (id) => {
+                mutate({ ...data, lessons: data.lessons.filter((l) => l.id !== id) });
+            };
+
+            return (
+                <div>
+                    <h3 className="text-lg font-extrabold mb-4 font-cairo" style={{ color: "#16302A" }}>الحصص</h3>
+                    <div className="rounded-xl p-4 mb-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="عنوان الحصة" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: Present Continuous" />
+                        <Field label="وصف مختصر" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="عن إيه الحصة" />
+                        <Field label="لينك الفيديو (اختياري)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://" />
+                        <Button variant="primary" onClick={addLesson}>➕ إضافة حصة</Button>
+                    </div>
+                    <div className="grid gap-3">
+                        {data.lessons.map((l) => (
+                            <div key={l.id} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                                <div>
+                                    <p className="font-bold" style={{ color: "#16302A" }}>{l.title}</p>
+                                    <p className="text-sm" style={{ color: "#6B675C" }}>{l.description}</p>
+                                </div>
+                                <button onClick={() => deleteLesson(l.id)} className="text-red-500 font-bold">حذف 🗑️</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function AdminSettings({ data, mutate }) {
+            const [phones, setPhones] = useState(data.contact.phones.join(", "));
+            const [note, setNote] = useState(data.contact.note);
+            const [newPassword, setNewPassword] = useState("");
+            const [saved, setSaved] = useState(false);
+
+            const save = () => {
+                const list = phones.split(",").map((p) => p.trim()).filter(Boolean);
+                const updated = { ...data, contact: { phones: list, note } };
+                if (newPassword.trim()) updated.adminPassword = newPassword.trim();
+                mutate(updated);
+                setSaved(true);
+                setNewPassword("");
+                setTimeout(() => setSaved(false), 1500);
+            };
+
+            return (
+                <div className="max-w-md">
+                    <h3 className="text-lg font-extrabold mb-4 font-cairo" style={{ color: "#16302A" }}>الإعدادات</h3>
+                    <div className="rounded-xl p-4" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                        <Field label="نص التواصل" value={note} onChange={(e) => setNote(e.target.value)} />
+                        <Field label="أرقام التواصل (افصل بينهم بفاصلة)" value={phones} onChange={(e) => setPhones(e.target.value)} />
+                        <Field label="تغيير كلمة سر الأدمن (اختياري)" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="سيب فاضي لو مش عايز تغيّر" />
+                        <Button variant="primary" onClick={save}>حفظ</Button>
+                        {saved && <span className="mr-3 text-sm font-bold" style={{ color: "#4C8C63" }}>اتحفظ ✓</span>}
+                    </div>
+                </div>
+            );
+        }
+
+        function AdminDashboard({ data, mutate }) {
+            const [tab, setTab] = useState("students");
+            return (
+                <div className="max-w-5xl mx-auto px-5 py-10">
+                    <h2 className="text-2xl font-extrabold mb-6 font-cairo" style={{ color: "#16302A" }}>لوحة تحكم الأدمن</h2>
+                    <div className="flex gap-2 mb-6 flex-wrap">
+                        <button onClick={() => setTab("students")} className="px-4 py-2 rounded-full text-sm font-bold" style={tab === "students" ? { background: "#16302A", color: "#FDFBF4" } : { background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}>الطلاب 👥</button>
+                        <button onClick={() => setTab("lessons")} className="px-4 py-2 rounded-full text-sm font-bold" style={tab === "lessons" ? { background: "#16302A", color: "#FDFBF4" } : { background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}>الحصص 📚</button>
+                        <button onClick={() => setTab("settings")} className="px-4 py-2 rounded-full text-sm font-bold" style={tab === "settings" ? { background: "#16302A", color: "#FDFBF4" } : { background: "#FDFBF4", color: "#16302A", border: "1px solid rgba(22,48,42,0.15)" }}>الإعدادات ⚙️</button>
+                    </div>
+                    {tab === "students" && <AdminStudents data={data} mutate={mutate} />}
+                    {tab === "lessons" && <AdminLessons data={data} mutate={mutate} />}
+                    {tab === "settings" && <AdminSettings data={data} mutate={mutate} />}
+                </div>
+            );
+        }
+
+        function App() {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [view, setView] = useState("landing");
+            const [student, setStudent] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [activeLesson, setActiveLesson] = useState(null);
+
+            useEffect(() => {
+                const loaded = loadPlatformData();
+                const finalData = loaded || DEFAULT_DATA;
+                setData(finalData);
+                setLoading(false);
+                if (!loaded) savePlatformData(finalData);
+            }, []);
+
+            const mutate = useCallback((newData) => {
+                setData(newData);
+                savePlatformData(newData);
+            }, []);
+
+            const handleStudentSignup = ({ fullName, studentNumber, parentNumber, password }) => {
+                const code = genCode();
+                const newStudent = { id: genId("s"), fullName, studentNumber, parentNumber, password, code, createdAt: Date.now() };
+                const newData = { ...data, students: [...data.students, newStudent] };
+                mutate(newData);
+                setStudent(newStudent);
+                setView("studentDashboard");
+            };
+
+            const handleStudentLogin = (matched) => {
+                setStudent(matched);
+                setView("studentDashboard");
+            };
+
+            const handleForgotPassword = (studentId, newPassword) => {
+                const newStudents = data.students.map((s) => (s.id === studentId ? { ...s, password: newPassword } : s));
+                mutate({ ...data, students: newStudents });
+            };
+
+            const handleRedeem = (lessonId, codeStr) => {
+                const codeEntry = data.codes.find((c) => c.code === codeStr.toUpperCase() && !c.used);
+                if (!codeEntry || codeEntry.studentId !== student.id || codeEntry.lessonId !== lessonId) {
+                    return "invalid";
+                }
+                const newCodes = data.codes.map((c) => (c.code === codeEntry.code ? { ...c, used: true } : c));
+                const newAccess = { ...data.access, [accessKey(student.id, lessonId)]: { status: "unlocked" } };
+                mutate({ ...data, codes: newCodes, access: newAccess });
+                return "ok";
+            };
+
+            const handleComplete = () => {
+                const newAccess = { ...data.access, [accessKey(student.id, activeLesson.id)]: { status: "completed" } };
+                mutate({ ...data, access: newAccess });
+            };
+
+            const logout = () => {
+                setStudent(null);
+                setIsAdmin(false);
+                setActiveLesson(null);
+                setView("landing");
+            };
+
+            if (loading || !data) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center font-bold text-lg" style={{ background: "#EEF0EA", color: "#16302A" }}>
+                        جاري تحميل المنصة...
+                    </div>
+                );
+            }
+
+            const loggedInLabel = student ? `الطالب: ${student.fullName.split(" ")[0]}` : isAdmin ? "الأدمن" : null;
+
+            return (
+                <div dir="rtl" className="min-h-screen w-full">
+                    <Header onNav={setView} loggedInLabel={loggedInLabel} onLogout={logout} />
+
+                    {view === "landing" && <Landing onNav={setView} contact={data.contact} />}
+                    {view === "studentLogin" && <StudentLogin students={data.students} onLogin={handleStudentLogin} onNav={setView} />}
+                    {view === "studentSignup" && <StudentSignup onSignup={handleStudentSignup} onNav={setView} />}
+                    {view === "studentForgot" && <StudentForgotPassword students={data.students} onReset={handleForgotPassword} onNav={setView} />}
+                    {view === "studentDashboard" && student && !activeLesson && (
+                        <StudentDashboard student={student} lessons={data.lessons} access={data.access} onRedeem={handleRedeem} onOpenLesson={setActiveLesson} />
+                    )}
+                    {view === "studentDashboard" && student && activeLesson && (
+                        <LessonView
+                            lesson={activeLesson}
+                            status={data.access[accessKey(student.id, activeLesson.id)]?.status}
+                            onComplete={handleComplete}
+                            onBack={() => setActiveLesson(null)}
+                        />
+                    )}
+                    {view === "adminLogin" && !isAdmin && <AdminLogin adminPassword={data.adminPassword} onLogin={() => { setIsAdmin(true); setView("adminDashboard"); }} />}
+                    {view === "adminDashboard" && isAdmin && <AdminDashboard data={data} mutate={mutate} />}
+
+                    <footer className="text-center py-8 text-sm font-bold" style={{ color: "#6B675C" }}>
+                        English Elfishawy © ٢٠٢٦
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
