@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,7 @@
         const { useState, useEffect, useCallback } = React;
 
         const STORAGE_KEY = "platform-data";
+        const SESSION_KEY = "platform-session";
 
         function genId(prefix) {
             return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -44,7 +45,7 @@
 
         const DEFAULT_DATA = {
             adminPassword: "admin123",
-            contact: { phones: ["01000000000"], note: "للتواصل والاستفسار واتساب أو اتصال" },
+            contact: { phones: ["01000000000"], note: "للتواصل واستفسار واتساب أو اتصال" },
             lessons: [
                 { id: genId("l"), title: "Present Simple", description: "شرح زمن المضارع البسيط مع أمثلة", videoUrl: "" },
                 { id: genId("l"), title: "Past Simple", description: "شرح زمن الماضي البسيط", videoUrl: "" },
@@ -69,6 +70,24 @@
         function savePlatformData(data) {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {}
+        }
+
+        function loadSession() {
+            try {
+                const res = localStorage.getItem(SESSION_KEY);
+                if (res) return JSON.parse(res);
+            } catch (e) {}
+            return null;
+        }
+
+        function saveSession(session) {
+            try {
+                if (session) {
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+                } else {
+                    localStorage.removeItem(SESSION_KEY);
+                }
             } catch (e) {}
         }
 
@@ -378,20 +397,49 @@
             );
         }
 
+        function VideoEmbed({ url }) {
+            if (!url) return <p style={{ color: "#6B675C" }}>محتوى الحصة هيتضاف قريب من الأستاذ</p>;
+
+            const getYouTubeEmbedUrl = (link) => {
+                const match = link.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+            };
+
+            const ytEmbed = getYouTubeEmbedUrl(url);
+
+            if (ytEmbed) {
+                return (
+                    <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: "56.25%" }}>
+                        <iframe
+                            className="absolute top-0 left-0 w-full h-full rounded-xl"
+                            src={ytEmbed}
+                            title="Lesson Video"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                );
+            }
+
+            return (
+                <video controls className="w-full rounded-xl max-h-[450px]">
+                    <source src={url} />
+                    المتصفح بتاعك مش بيدعم تشغيل الفيديو.
+                </video>
+            );
+        }
+
         function LessonView({ lesson, status, onComplete, onBack }) {
             return (
                 <div className="max-w-3xl mx-auto px-5 py-10">
                     <button onClick={onBack} className="mb-6 inline-flex items-center gap-1 text-sm font-bold px-3 py-2 rounded-full" style={{ color: "#16302A", background: "#EAF0EE" }}>← رجوع</button>
-                    <div className="rounded-2xl p-6 md:p-8" style={{ background: "#16302A" }}>
+                    <div className="rounded-2xl p-6 md:p-8 mb-6" style={{ background: "#16302A" }}>
                         <h2 className="text-2xl font-extrabold text-white font-cairo">{lesson.title}</h2>
                         <p className="mt-2" style={{ color: "#C9D9CE" }}>{lesson.description}</p>
                     </div>
-                    <div className="mt-6 rounded-xl p-8 text-center" style={{ background: "#FDFBF4", border: "1px dashed rgba(22,48,42,0.25)" }}>
-                        {lesson.videoUrl ? (
-                            <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="font-bold underline" style={{ color: "#3E6E8E" }}>افتح فيديو الحصة</a>
-                        ) : (
-                            <p style={{ color: "#6B675C" }}>محتوى الحصة هيتضاف قريب من الأستاذ</p>
-                        )}
+                    <div className="rounded-xl p-4 text-center" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.15)" }}>
+                        <VideoEmbed url={lesson.videoUrl} />
                     </div>
                     {status !== "completed" && (
                         <div className="mt-6">
@@ -530,7 +578,7 @@
                     <div className="rounded-xl p-4 mb-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
                         <Field label="عنوان الحصة" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: Present Continuous" />
                         <Field label="وصف مختصر" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="عن إيه الحصة" />
-                        <Field label="لينك الفيديو (اختياري)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://" />
+                        <Field label="رابط فيديو الحصة (يوتيوب أو رابط مباشر)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
                         <Button variant="primary" onClick={addLesson}>➕ إضافة حصة</Button>
                     </div>
                     <div className="grid gap-3">
@@ -607,6 +655,21 @@
                 const loaded = loadPlatformData();
                 const finalData = loaded || DEFAULT_DATA;
                 setData(finalData);
+
+                const savedSession = loadSession();
+                if (savedSession) {
+                    if (savedSession.role === "student" && savedSession.studentId) {
+                        const matched = finalData.students.find((s) => s.id === savedSession.studentId);
+                        if (matched) {
+                            setStudent(matched);
+                            setView("studentDashboard");
+                        }
+                    } else if (savedSession.role === "admin") {
+                        setIsAdmin(true);
+                        setView("adminDashboard");
+                    }
+                }
+
                 setLoading(false);
                 if (!loaded) savePlatformData(finalData);
             }, []);
@@ -623,11 +686,13 @@
                 mutate(newData);
                 setStudent(newStudent);
                 setView("studentDashboard");
+                saveSession({ role: "student", studentId: newStudent.id });
             };
 
             const handleStudentLogin = (matched) => {
                 setStudent(matched);
                 setView("studentDashboard");
+                saveSession({ role: "student", studentId: matched.id });
             };
 
             const handleForgotPassword = (studentId, newPassword) => {
@@ -656,6 +721,7 @@
                 setIsAdmin(false);
                 setActiveLesson(null);
                 setView("landing");
+                saveSession(null);
             };
 
             if (loading || !data) {
@@ -687,7 +753,7 @@
                             onBack={() => setActiveLesson(null)}
                         />
                     )}
-                    {view === "adminLogin" && !isAdmin && <AdminLogin adminPassword={data.adminPassword} onLogin={() => { setIsAdmin(true); setView("adminDashboard"); }} />}
+                    {view === "adminLogin" && !isAdmin && <AdminLogin adminPassword={data.adminPassword} onLogin={() => { setIsAdmin(true); setView("adminDashboard"); saveSession({ role: "admin" }); }} />}
                     {view === "adminDashboard" && isAdmin && <AdminDashboard data={data} mutate={mutate} />}
 
                     <footer className="text-center py-8 text-sm font-bold" style={{ color: "#6B675C" }}>
