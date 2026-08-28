@@ -21,32 +21,34 @@ body{
     background:#EEF0EA;
     color:#16302A;
 }
-h1,h2,h3,h4{
+h1,h2,h3,h4,.font-cairo{
     font-family:'Cairo',sans-serif;
 }
 button{
     cursor:pointer;
 }
+.no-select{
+    user-select:none;
+    -webkit-user-select:none;
+}
+input,select{
+    box-sizing:border-box;
+}
 </style>
 </head>
 
 <body>
-
 <div id="root"></div>
 
 <script type="text/babel">
 
 const {useState,useEffect} = React;
 
-/* =========================
-   SUPABASE
-========================= */
-
 const SUPABASE_URL =
 "https://fspatqdkbsloohyvpvgn.supabase.co";
 
 const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzcGF0cWRrYnNsb29oeXZwdmduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NzA3NTMsImV4cCI6MjEwMzQ0Njc1M30.Ml4WWKLHFqZeNSG-C1wIfII8bofKrjPBHQWH9QrInng";
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmc3BhdHFka2JzbG9vaHl2cHZnIiwicmVmIjoiZnNwYXRxZGtic2xvb2h5dnB2Z24iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4Nzg3MDc1MywiZXhwIjoxMTAzNDQ2NzUzfQ.Ml4WWKLHFqZeNSG-C1wIfII8bofKrjPBHQWH9QrInng";
 
 const supabase =
 window.supabase.createClient(
@@ -54,45 +56,36 @@ window.supabase.createClient(
     SUPABASE_ANON_KEY
 );
 
+const ADMIN_EMAIL =
+"maryammostafa208125@gmail.com";
+
 
 /* =========================
    HELPERS
 ========================= */
 
-function generateCode(){
-    const chars =
-    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    let result="";
-
+function genCode(){
+    const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let s="";
     for(let i=0;i<8;i++){
-        if(i===4) result+="-";
-        result += chars[
-            Math.floor(Math.random()*chars.length)
-        ];
+        if(i===4)s+="-";
+        s+=chars[Math.floor(Math.random()*chars.length)];
     }
-
-    return "EF-"+result;
+    return "EF-"+s;
 }
 
-
-/* =========================
-   BUTTON
-========================= */
-
-function Button({children,onClick,variant="primary",type="button"}){
-
+function Button({children,variant="primary",...props}){
     const styles={
         primary:{
             background:"#16302A",
-            color:"#fff"
+            color:"#FDFBF4"
         },
         accent:{
             background:"#F2C744",
             color:"#16302A"
         },
         outline:{
-            background:"#fff",
+            background:"transparent",
             color:"#16302A",
             border:"2px solid #16302A"
         },
@@ -104,9 +97,8 @@ function Button({children,onClick,variant="primary",type="button"}){
 
     return(
         <button
-            type={type}
-            onClick={onClick}
-            className="rounded-full px-5 py-3 font-bold transition active:scale-95"
+            {...props}
+            className="rounded-full px-5 py-2.5 font-bold text-sm transition active:scale-95"
             style={styles[variant]}
         >
             {children}
@@ -114,9 +106,1152 @@ function Button({children,onClick,variant="primary",type="button"}){
     );
 }
 
+function Field({label,...props}){
+    return(
+        <label className="block mb-4">
+            <span
+                className="block text-sm font-bold mb-1"
+                style={{color:"#16302A"}}
+            >
+                {label}
+            </span>
+
+            <input
+                {...props}
+                className="w-full rounded-xl px-4 py-3 outline-none"
+                style={{
+                    border:"1px solid rgba(22,48,42,.2)",
+                    background:"#FDFBF4",
+                    color:"#16302A"
+                }}
+            />
+        </label>
+    );
+}
+
 
 /* =========================
-   INPUT
+   HEADER
 ========================= */
 
-function
+function Header({user,onLogout,onHome}){
+
+    return(
+        <header
+            className="sticky top-0 z-50"
+            style={{
+                background:"#16302A",
+                borderBottom:"3px solid #F2C744"
+            }}
+        >
+
+            <div className="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
+
+                <button
+                    onClick={onHome}
+                    className="text-xl font-extrabold font-cairo"
+                    style={{color:"#F2C744"}}
+                >
+                    English Elfishawy
+                </button>
+
+                {user && (
+                    <button
+                        onClick={onLogout}
+                        className="text-white font-bold text-sm"
+                    >
+                        خروج
+                    </button>
+                )}
+
+            </div>
+        </header>
+    );
+}
+
+
+/* =========================
+   LANDING
+========================= */
+
+function Landing({go}){
+
+    return(
+        <div>
+
+            <section className="text-center px-5 py-20">
+
+                <div
+                    className="inline-block rounded-full px-4 py-2 mb-5 text-sm font-bold"
+                    style={{
+                        background:"#FDFBF4",
+                        border:"1px solid rgba(22,48,42,.15)"
+                    }}
+                >
+                    🔒 منصة English Elfishawy
+                </div>
+
+                <h1
+                    className="text-4xl md:text-6xl font-extrabold font-cairo"
+                    style={{color:"#16302A"}}
+                >
+                    اتعلم English بطريقة أذكى
+                </h1>
+
+                <p
+                    className="max-w-xl mx-auto mt-6 text-lg"
+                    style={{color:"#5C5A51"}}
+                >
+                    دروس اللغة الإنجليزية الخاصة بـ Mr. Mostafa Elfishawy
+                </p>
+
+                <div className="flex justify-center gap-3 mt-8 flex-wrap">
+
+                    <Button onClick={()=>go("login")}>
+                        دخول الطالب
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={()=>go("signup")}
+                    >
+                        إنشاء حساب
+                    </Button>
+
+                </div>
+
+            </section>
+
+            <div
+                className="py-4 text-center font-bold"
+                style={{
+                    background:"#F2C744",
+                    color:"#16302A"
+                }}
+            >
+                للتواصل والاستفسار: 01000000000
+            </div>
+
+        </div>
+    );
+}
+
+
+/* =========================
+   SIGNUP
+========================= */
+
+function Signup({go,onDone}){
+
+    const [name,setName]=useState("");
+    const [email,setEmail]=useState("");
+    const [studentNumber,setStudentNumber]=useState("");
+    const [parentNumber,setParentNumber]=useState("");
+    const [password,setPassword]=useState("");
+    const [loading,setLoading]=useState(false);
+    const [error,setError]=useState("");
+    const [success,setSuccess]=useState("");
+
+    async function submit(){
+
+        setError("");
+        setSuccess("");
+
+        if(name.trim().split(/\s+/).length<3){
+            setError("اكتب الاسم الثلاثي كاملًا");
+            return;
+        }
+
+        if(!email || !studentNumber || !parentNumber || !password){
+            setError("املأ كل البيانات");
+            return;
+        }
+
+        if(password.length<6){
+            setError("الباسورد لازم يكون 6 حروف أو أرقام على الأقل");
+            return;
+        }
+
+        setLoading(true);
+
+        try{
+
+            const {data:authData,error:authError} =
+            await supabase.auth.signUp({
+                email,
+                password
+            });
+
+            if(authError) throw authError;
+
+            if(!authData.user){
+                throw new Error("لم يتم إنشاء الحساب");
+            }
+
+            const {error:studentError} =
+            await supabase
+            .from("students")
+            .insert({
+                id:authData.user.id,
+                full_name:name.trim(),
+                student_number:studentNumber.trim(),
+                parent_number:parentNumber.trim(),
+                student_code:genCode(),
+                email:email.trim()
+            });
+
+            if(studentError) throw studentError;
+
+            if(authData.session){
+
+                onDone(authData.user);
+
+            }else{
+
+                setSuccess(
+                    "تم إنشاء الحساب. لو طلب منك تأكيد الإيميل، أكده ثم سجل دخولك."
+                );
+
+            }
+
+        }catch(e){
+
+            setError(e.message || "حصل خطأ أثناء إنشاء الحساب");
+
+        }finally{
+
+            setLoading(false);
+
+        }
+    }
+
+    return(
+        <div className="max-w-md mx-auto px-5 py-12">
+
+            <h2 className="text-3xl font-extrabold text-center font-cairo mb-7">
+                حساب جديد
+            </h2>
+
+            <div
+                className="rounded-2xl p-6"
+                style={{
+                    background:"#FDFBF4",
+                    border:"1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <Field
+                    label="الاسم الثلاثي"
+                    value={name}
+                    onChange={e=>setName(e.target.value)}
+                    placeholder="مثال: أحمد محمد علي"
+                />
+
+                <Field
+                    label="الإيميل"
+                    type="email"
+                    value={email}
+                    onChange={e=>setEmail(e.target.value)}
+                    placeholder="example@gmail.com"
+                />
+
+                <Field
+                    label="رقم الطالب"
+                    value={studentNumber}
+                    onChange={e=>setStudentNumber(e.target.value)}
+                />
+
+                <Field
+                    label="رقم ولي الأمر"
+                    value={parentNumber}
+                    onChange={e=>setParentNumber(e.target.value)}
+                />
+
+                <Field
+                    label="الباسورد"
+                    type="password"
+                    value={password}
+                    onChange={e=>setPassword(e.target.value)}
+                />
+
+                {error &&
+                    <p
+                        className="text-sm font-bold mb-4"
+                        style={{color:"#E85C41"}}
+                    >
+                        {error}
+                    </p>
+                }
+
+                {success &&
+                    <p
+                        className="text-sm font-bold mb-4"
+                        style={{color:"#4C8C63"}}
+                    >
+                        {success}
+                    </p>
+                }
+
+                <Button
+                    className="w-full"
+                    disabled={loading}
+                    onClick={submit}
+                >
+                    {loading?"جاري إنشاء الحساب...":"إنشاء الحساب"}
+                </Button>
+
+                <button
+                    onClick={()=>go("login")}
+                    className="block w-full mt-5 text-sm font-bold"
+                    style={{color:"#3E6E8E"}}
+                >
+                    عندك حساب؟ سجل دخولك
+                </button>
+
+            </div>
+
+        </div>
+    );
+}
+
+
+/* =========================
+   LOGIN
+========================= */
+
+function Login({go,onDone}){
+
+    const [email,setEmail]=useState("");
+    const [password,setPassword]=useState("");
+    const [error,setError]=useState("");
+    const [loading,setLoading]=useState(false);
+
+    async function submit(){
+
+        setError("");
+        setLoading(true);
+
+        const {data,error} =
+        await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        setLoading(false);
+
+        if(error){
+            setError("الإيميل أو الباسورد غير صحيح");
+            return;
+        }
+
+        onDone(data.user);
+    }
+
+    return(
+        <div className="max-w-md mx-auto px-5 py-14">
+
+            <h2 className="text-3xl font-extrabold text-center font-cairo mb-7">
+                تسجيل الدخول
+            </h2>
+
+            <div
+                className="rounded-2xl p-6"
+                style={{
+                    background:"#FDFBF4",
+                    border:"1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <Field
+                    label="الإيميل"
+                    type="email"
+                    value={email}
+                    onChange={e=>setEmail(e.target.value)}
+                    placeholder="example@gmail.com"
+                />
+
+                <Field
+                    label="الباسورد"
+                    type="password"
+                    value={password}
+                    onChange={e=>setPassword(e.target.value)}
+                />
+
+                {error &&
+                    <p
+                        className="text-sm font-bold mb-4"
+                        style={{color:"#E85C41"}}
+                    >
+                        {error}
+                    </p>
+                }
+
+                <Button
+                    className="w-full"
+                    onClick={submit}
+                    disabled={loading}
+                >
+                    {loading?"جاري الدخول...":"دخول"}
+                </Button>
+
+                <button
+                    onClick={()=>go("signup")}
+                    className="block w-full mt-5 text-sm font-bold"
+                    style={{color:"#3E6E8E"}}
+                >
+                    إنشاء حساب جديد
+                </button>
+
+            </div>
+
+        </div>
+    );
+}
+
+
+/* =========================
+   STUDENT DASHBOARD
+========================= */
+
+function StudentDashboard({student,lessons,access,codes,onRefresh}){
+
+    const [code,setCode]=useState({});
+    const [message,setMessage]=useState("");
+    const [active,setActive]=useState(null);
+
+    async function redeem(lesson){
+
+        const value=(code[lesson.id]||"").trim().toUpperCase();
+
+        if(!value){
+            setMessage("اكتب الكود أولًا");
+            return;
+        }
+
+        const {data:found,error} =
+        await supabase
+        .from("lesson_codes")
+        .select("*")
+        .eq("code",value)
+        .eq("lesson_id",lesson.id)
+        .eq("used",false)
+        .maybeSingle();
+
+        if(error || !found){
+            setMessage("الكود غير صحيح أو مستخدم");
+            return;
+        }
+
+        const {error:updateError} =
+        await supabase
+        .from("lesson_codes")
+        .update({
+            used:true,
+            used_by:student.id
+        })
+        .eq("id",found.id);
+
+        if(updateError){
+            setMessage("حصل خطأ، حاول مرة تانية");
+            return;
+        }
+
+        await supabase
+        .from("lesson_access")
+        .upsert({
+            student_id:student.id,
+            lesson_id:lesson.id,
+            status:"unlocked"
+        },{
+            onConflict:"student_id,lesson_id"
+        });
+
+        setMessage("تم فتح الحصة ✓");
+        onRefresh();
+    }
+
+    async function complete(lesson){
+
+        await supabase
+        .from("lesson_access")
+        .update({status:"completed"})
+        .eq("student_id",student.id)
+        .eq("lesson_id",lesson.id);
+
+        onRefresh();
+    }
+
+    if(active){
+
+        const item=access.find(
+            x=>x.lesson_id===active.id
+        );
+
+        return(
+            <div className="max-w-4xl mx-auto px-5 py-10">
+
+                <button
+                    onClick={()=>setActive(null)}
+                    className="mb-6 font-bold"
+                >
+                    ← رجوع
+                </button>
+
+                <div
+                    className="rounded-2xl p-6 mb-5"
+                    style={{background:"#16302A"}}
+                >
+                    <h2 className="text-2xl font-extrabold text-white font-cairo">
+                        {active.title}
+                    </h2>
+
+                    <p className="text-white/70 mt-2">
+                        {active.description}
+                    </p>
+                </div>
+
+                <div
+                    className="rounded-2xl overflow-hidden"
+                    style={{background:"#FDFBF4"}}
+                >
+
+                    {active.video_url ? (
+
+                        <div
+                            className="relative"
+                            style={{paddingTop:"56.25%"}}
+                        >
+
+                            <iframe
+                                className="absolute inset-0 w-full h-full"
+                                src={getYoutubeEmbed(active.video_url)}
+                                title={active.title}
+                                allowFullScreen
+                            />
+
+                        </div>
+
+                    ):(
+                        <div className="p-10 text-center font-bold">
+                            محتوى الحصة هيتضاف قريبًا من الأستاذ.
+                        </div>
+                    )}
+
+                </div>
+
+                {item?.status!=="completed" && (
+
+                    <div className="mt-6">
+                        <Button
+                            variant="accent"
+                            onClick={()=>complete(active)}
+                        >
+                            ✅ أنهيت الحصة
+                        </Button>
+                    </div>
+
+                )}
+
+            </div>
+        );
+    }
+
+    return(
+        <div className="max-w-4xl mx-auto px-5 py-10">
+
+            <h2 className="text-3xl font-extrabold font-cairo">
+                أهلاً {student.full_name.split(" ")[0]} 👋
+            </h2>
+
+            <p
+                className="mt-2 mb-8"
+                style={{color:"#6B675C"}}
+            >
+                كود الطالب: <b>{student.student_code}</b>
+            </p>
+
+            {message && (
+                <div
+                    className="rounded-xl p-3 mb-5 font-bold"
+                    style={{
+                        background:"#FDFBF4",
+                        border:"1px solid rgba(22,48,42,.15)"
+                    }}
+                >
+                    {message}
+                </div>
+            )}
+
+            <div className="grid gap-4">
+
+                {lessons.map(lesson=>{
+
+                    const item=access.find(
+                        x=>x.lesson_id===lesson.id
+                    );
+
+                    const status=item?.status || "locked";
+
+                    return(
+                        <div
+                            key={lesson.id}
+                            className="rounded-2xl p-5"
+                            style={{
+                                background:"#FDFBF4",
+                                border:"1px solid rgba(22,48,42,.12)"
+                            }}
+                        >
+
+                            <div className="flex justify-between gap-4">
+
+                                <div>
+
+                                    <h3 className="text-lg font-bold font-cairo">
+                                        {status==="locked"?"🔒":
+                                         status==="completed"?"✅":"🔓"}
+                                        {" "}
+                                        {lesson.title}
+                                    </h3>
+
+                                    <p
+                                        className="text-sm mt-1"
+                                        style={{color:"#6B675C"}}
+                                    >
+                                        {lesson.description}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                            {status==="locked" && (
+
+                                <div className="flex gap-2 mt-4">
+
+                                    <input
+                                        value={code[lesson.id]||""}
+                                        onChange={e=>
+                                            setCode({
+                                                ...code,
+                                                [lesson.id]:e.target.value
+                                            })
+                                        }
+                                        placeholder="كود الحصة"
+                                        className="flex-1 rounded-xl px-4 py-2 outline-none"
+                                        style={{
+                                            background:"#F7F3E8",
+                                            border:"1px solid rgba(22,48,42,.2)"
+                                        }}
+                                    />
+
+                                    <Button
+                                        variant="accent"
+                                        onClick={()=>redeem(lesson)}
+                                    >
+                                        🔑 فتح
+                                    </Button>
+
+                                </div>
+                            )}
+
+                            {(status==="unlocked" ||
+                              status==="completed") && (
+
+                                <div className="mt-4">
+
+                                    <Button
+                                        onClick={()=>setActive(lesson)}
+                                    >
+                                        ▶ دخول الحصة
+                                    </Button>
+
+                                </div>
+
+                            )}
+
+                        </div>
+                    );
+                })}
+
+                {lessons.length===0 && (
+                    <p className="text-center font-bold py-10">
+                        مفيش حصص مضافة حاليًا.
+                    </p>
+                )}
+
+            </div>
+
+        </div>
+    );
+}
+
+
+/* =========================
+   ADMIN
+========================= */
+
+function AdminDashboard({lessons,onRefresh}){
+
+    const [title,setTitle]=useState("");
+    const [description,setDescription]=useState("");
+    const [video,setVideo]=useState("");
+    const [codes,setCodes]=useState(10);
+    const [selected,setSelected]=useState("");
+
+    async function addLesson(){
+
+        if(!title.trim()) return;
+
+        await supabase
+        .from("lessons")
+        .insert({
+            title:title.trim(),
+            description:description.trim(),
+            video_url:video.trim()
+        });
+
+        setTitle("");
+        setDescription("");
+        setVideo("");
+
+        onRefresh();
+    }
+
+    async function deleteLesson(id){
+
+        await supabase
+        .from("lessons")
+        .delete()
+        .eq("id",id);
+
+        onRefresh();
+    }
+
+    async function generateCodes(){
+
+        if(!selected) return;
+
+        const amount=Math.min(
+            100,
+            Math.max(1,Number(codes)||1)
+        );
+
+        const rows=[];
+
+        for(let i=0;i<amount;i++){
+
+            rows.push({
+                code:genCode(),
+                lesson_id:selected,
+                used:false
+            });
+
+        }
+
+        await supabase
+        .from("lesson_codes")
+        .insert(rows);
+
+        alert("تم إنشاء "+amount+" كود ✓");
+    }
+
+    return(
+        <div className="max-w-5xl mx-auto px-5 py-10">
+
+            <h2 className="text-3xl font-extrabold font-cairo mb-8">
+                لوحة تحكم الأدمن ⚙️
+            </h2>
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:"1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <h3 className="text-xl font-bold mb-5">
+                    إضافة حصة
+                </h3>
+
+                <Field
+                    label="عنوان الحصة"
+                    value={title}
+                    onChange={e=>setTitle(e.target.value)}
+                    placeholder="Present Simple"
+                />
+
+                <Field
+                    label="الوصف"
+                    value={description}
+                    onChange={e=>setDescription(e.target.value)}
+                />
+
+                <Field
+                    label="رابط الفيديو"
+                    value={video}
+                    onChange={e=>setVideo(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                />
+
+                <Button onClick={addLesson}>
+                    ➕ إضافة الحصة
+                </Button>
+
+            </div>
+
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:"1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <h3 className="text-xl font-bold mb-5">
+                    🎟️ إنشاء أكواد
+                </h3>
+
+                <select
+                    value={selected}
+                    onChange={e=>setSelected(e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 mb-4"
+                    style={{
+                        border:"1px solid rgba(22,48,42,.2)",
+                        background:"#FDFBF4"
+                    }}
+                >
+
+                    <option value="">
+                        اختر الحصة
+                    </option>
+
+                    {lessons.map(l=>(
+                        <option key={l.id} value={l.id}>
+                            {l.title}
+                        </option>
+                    ))}
+
+                </select>
+
+                <Field
+                    label="عدد الأكواد"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={codes}
+                    onChange={e=>setCodes(e.target.value)}
+                />
+
+                <Button
+                    variant="accent"
+                    onClick={generateCodes}
+                >
+                    🎲 إنشاء الأكواد
+                </Button>
+
+            </div>
+
+
+            <div>
+
+                <h3 className="text-xl font-bold mb-4">
+                    📚 الحصص الحالية
+                </h3>
+
+                <div className="grid gap-3">
+
+                    {lessons.map(l=>(
+                        <div
+                            key={l.id}
+                            className="rounded-xl p-4 flex justify-between items-center gap-3"
+                            style={{
+                                background:"#FDFBF4",
+                                border:"1px solid rgba(22,48,42,.12)"
+                            }}
+                        >
+
+                            <div>
+
+                                <p className="font-bold">
+                                    {l.title}
+                                </p>
+
+                                <p
+                                    className="text-sm"
+                                    style={{color:"#6B675C"}}
+                                >
+                                    {l.description}
+                                </p>
+
+                            </div>
+
+                            <button
+                                onClick={()=>deleteLesson(l.id)}
+                                className="font-bold"
+                                style={{color:"#E85C41"}}
+                            >
+                                حذف 🗑️
+                            </button>
+
+                        </div>
+                    ))}
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
+
+
+/* =========================
+   YOUTUBE
+========================= */
+
+function getYoutubeEmbed(url){
+
+    if(!url) return "";
+
+    const match=url.match(
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/
+    );
+
+    if(!match) return url;
+
+    return "https://www.youtube.com/embed/"+match[1];
+}
+
+
+/* =========================
+   APP
+========================= */
+
+function App(){
+
+    const [page,setPage]=useState("home");
+    const [user,setUser]=useState(null);
+    const [student,setStudent]=useState(null);
+    const [lessons,setLessons]=useState([]);
+    const [access,setAccess]=useState([]);
+    const [loading,setLoading]=useState(true);
+    const [admin,setAdmin]=useState(false);
+
+    async function loadData(currentUser){
+
+        const {data:lessonData}=
+        await supabase
+        .from("lessons")
+        .select("*")
+        .order("created_at",{ascending:true});
+
+        setLessons(lessonData||[]);
+
+        if(currentUser){
+
+            const {data:studentData}=
+            await supabase
+            .from("students")
+            .select("*")
+            .eq("id",currentUser.id)
+            .maybeSingle();
+
+            if(studentData){
+                setStudent(studentData);
+            }
+
+            const {data:accessData}=
+            await supabase
+            .from("lesson_access")
+            .select("*")
+            .eq("student_id",currentUser.id);
+
+            setAccess(accessData||[]);
+        }
+    }
+
+    async function refresh(){
+
+        if(user){
+            await loadData(user);
+        }else{
+            await loadData(null);
+        }
+    }
+
+    useEffect(()=>{
+
+        async function start(){
+
+            const {
+                data:{session}
+            }=await supabase.auth.getSession();
+
+            if(session?.user){
+
+                setUser(session.user);
+
+                if(session.user.email===ADMIN_EMAIL){
+
+                    setAdmin(true);
+                    setPage("admin");
+
+                }else{
+
+                    setAdmin(false);
+                    setPage("student");
+
+                }
+
+                await loadData(session.user);
+
+            }else{
+
+                await loadData(null);
+
+            }
+
+            setLoading(false);
+        }
+
+        start();
+
+        const {
+            data:{subscription}
+        }=supabase.auth.onAuthStateChange(
+            async(event,session)=>{
+
+                if(session?.user){
+
+                    setUser(session.user);
+
+                }else{
+
+                    setUser(null);
+                    setStudent(null);
+                    setAdmin(false);
+                    setPage("home");
+
+                }
+            }
+        );
+
+        return()=>subscription.unsubscribe();
+
+    },[]);
+
+
+    async function loginDone(u){
+
+        setUser(u);
+
+        if(u.email===ADMIN_EMAIL){
+
+            setAdmin(true);
+            setPage("admin");
+
+        }else{
+
+            setAdmin(false);
+            setPage("student");
+
+        }
+
+        await loadData(u);
+    }
+
+
+    async function logout(){
+
+        await supabase.auth.signOut();
+
+        setUser(null);
+        setStudent(null);
+        setAdmin(false);
+        setPage("home");
+    }
+
+
+    if(loading){
+
+        return(
+            <div
+                className="min-h-screen flex items-center justify-center font-bold text-lg"
+                style={{
+                    background:"#EEF0EA",
+                    color:"#16302A"
+                }}
+            >
+                جاري تحميل المنصة...
+            </div>
+        );
+    }
+
+
+    return(
+        <div className="min-h-screen">
+
+            <Header
+                user={user}
+                onLogout={logout}
+                onHome={()=>setPage("home")}
+            />
+
+            {page==="home" &&
+                <Landing go={setPage}/>
+            }
+
+            {page==="signup" &&
+                <Signup
+                    go={setPage}
+                    onDone={loginDone}
+                />
+            }
+
+            {page==="login" &&
+                <Login
+                    go={setPage}
+                    onDone={loginDone}
+                />
+            }
+
+            {page==="student" &&
+             user &&
+             student &&
+                <StudentDashboard
+                    student={student}
+                    lessons={lessons}
+                    access={access}
+                    onRefresh={refresh}
+                />
+            }
+
+            {page==="admin" &&
+             user &&
+             admin &&
+                <AdminDashboard
+                    lessons={lessons}
+                    onRefresh={refresh}
+                />
+            }
+
+            <footer
+                className="text-center py-10 text-sm font-bold"
+                style={{color:"#6B675C"}}
+            >
+                English Elfishawy © 2026
+            </footer>
+
+        </div>
+    );
+}
+
+ReactDOM
+.createRoot(document.getElementById("root"))
+.render(<App/>);
+
+</script>
+</body>
+</html>
