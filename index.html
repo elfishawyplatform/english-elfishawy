@@ -1785,6 +1785,833 @@ function AdminDashboard({
                                 }
                                 className="font-bold"
                                 style={{
+/* =====================================================
+   ADMIN DASHBOARD
+===================================================== */
+
+function AdminDashboard({
+    lessons,
+    onRefresh
+}){
+
+    const [title,setTitle]=useState("");
+    const [description,setDescription]=useState("");
+    const [video,setVideo]=useState("");
+
+    const [codes,setCodes]=useState(10);
+    const [selected,setSelected]=useState("");
+
+    const [students,setStudents]=useState([]);
+    const [allAccess,setAllAccess]=useState([]);
+
+    const [message,setMessage]=useState("");
+    const [loadingStudents,setLoadingStudents]=useState(false);
+
+    const [settings,setSettings]=useState({
+        title:"English Elfishawy",
+        subtitle:"اتعلم English بطريقة أذكى",
+        description:"دروس اللغة الإنجليزية الخاصة بـ Mr. Mostafa Elfishawy",
+        phone:"01000000000"
+    });
+
+    const [settingsLoading,setSettingsLoading]=useState(false);
+
+
+    /* =========================
+       LOAD STUDENTS
+    ========================= */
+
+    async function loadStudents(){
+
+        setLoadingStudents(true);
+
+        const {data,error} =
+        await supabase
+        .from("students")
+        .select("*")
+        .order("created_at",{ascending:false});
+
+        if(error){
+
+            setMessage(
+                "خطأ في تحميل الطلاب: "+
+                error.message
+            );
+
+        }else{
+
+            setStudents(data || []);
+
+        }
+
+        const {data:accessData} =
+        await supabase
+        .from("lesson_access")
+        .select("*");
+
+        setAllAccess(accessData || []);
+
+        setLoadingStudents(false);
+    }
+
+
+    /* =========================
+       LOAD SETTINGS
+    ========================= */
+
+    async function loadSettings(){
+
+        const {data,error} =
+        await supabase
+        .from("platform_store")
+        .select("content")
+        .eq("id",1)
+        .maybeSingle();
+
+        if(!error && data?.content){
+
+            setSettings(prev=>({
+                ...prev,
+                ...data.content
+            }));
+
+        }
+
+    }
+
+
+    useEffect(()=>{
+
+        loadStudents();
+        loadSettings();
+
+    },[]);
+
+
+    /* =========================
+       ADD LESSON
+    ========================= */
+
+    async function addLesson(){
+
+        setMessage("");
+
+        if(!title.trim()){
+
+            setMessage(
+                "اكتب عنوان الحصة"
+            );
+
+            return;
+        }
+
+        const {error} =
+        await supabase
+        .from("lessons")
+        .insert({
+
+            title:title.trim(),
+
+            description:
+            description.trim(),
+
+            video_url:
+            video.trim()
+
+        });
+
+        if(error){
+
+            setMessage(
+                "حصل خطأ أثناء إضافة الحصة: "+
+                error.message
+            );
+
+            return;
+        }
+
+        setTitle("");
+        setDescription("");
+        setVideo("");
+
+        setMessage(
+            "تمت إضافة الحصة ✓"
+        );
+
+        await onRefresh();
+    }
+
+
+    /* =========================
+       DELETE LESSON
+    ========================= */
+
+    async function deleteLesson(id){
+
+        if(!confirm(
+            "هل أنت متأكد من حذف هذه الحصة؟"
+        )){
+            return;
+        }
+
+        const {error} =
+        await supabase
+        .from("lessons")
+        .delete()
+        .eq("id",id);
+
+        if(error){
+
+            alert(
+                "حصل خطأ أثناء الحذف: "+
+                error.message
+            );
+
+            return;
+        }
+
+        await onRefresh();
+        await loadStudents();
+    }
+
+
+    /* =========================
+       GENERATE CODES
+    ========================= */
+
+    async function generateCodes(){
+
+        if(!selected){
+
+            alert(
+                "اختار الحصة الأول"
+            );
+
+            return;
+        }
+
+        const amount =
+        Math.min(
+            100,
+            Math.max(
+                1,
+                Number(codes) || 1
+            )
+        );
+
+        const rows=[];
+
+        for(let i=0;i<amount;i++){
+
+            rows.push({
+
+                code:genCode(),
+
+                lesson_id:selected,
+
+                used:false
+
+            });
+
+        }
+
+        const {error} =
+        await supabase
+        .from("lesson_codes")
+        .insert(rows);
+
+        if(error){
+
+            alert(
+                "حصل خطأ أثناء إنشاء الأكواد: "+
+                error.message
+            );
+
+            return;
+        }
+
+        alert(
+            "تم إنشاء "+
+            amount+
+            " كود ✓"
+        );
+    }
+
+
+    /* =========================
+       OPEN LESSON FOR STUDENT
+    ========================= */
+
+    async function openLesson(
+        studentId,
+        lessonId
+    ){
+
+        const {error} =
+        await supabase
+        .from("lesson_access")
+        .upsert({
+
+            student_id:studentId,
+
+            lesson_id:lessonId,
+
+            status:"unlocked"
+
+        },{
+            onConflict:
+            "student_id,lesson_id"
+        });
+
+        if(error){
+
+            alert(
+                "حصل خطأ: "+
+                error.message
+            );
+
+            return;
+        }
+
+        await loadStudents();
+    }
+
+
+    /* =========================
+       CLOSE LESSON FOR STUDENT
+    ========================= */
+
+    async function closeLesson(
+        studentId,
+        lessonId
+    ){
+
+        const {error} =
+        await supabase
+        .from("lesson_access")
+        .upsert({
+
+            student_id:studentId,
+
+            lesson_id:lessonId,
+
+            status:"locked"
+
+        },{
+            onConflict:
+            "student_id,lesson_id"
+        });
+
+        if(error){
+
+            alert(
+                "حصل خطأ: "+
+                error.message
+            );
+
+            return;
+        }
+
+        await loadStudents();
+    }
+
+
+    /* =========================
+       SAVE SETTINGS
+    ========================= */
+
+    async function saveSettings(){
+
+        setSettingsLoading(true);
+
+        const {error} =
+        await supabase
+        .from("platform_store")
+        .upsert({
+
+            id:1,
+
+            content:settings
+
+        });
+
+        setSettingsLoading(false);
+
+        if(error){
+
+            setMessage(
+                "حصل خطأ في حفظ الإعدادات: "+
+                error.message
+            );
+
+            return;
+        }
+
+        setMessage(
+            "تم حفظ إعدادات المنصة ✓"
+        );
+    }
+
+
+    return(
+
+        <div
+            className="max-w-6xl mx-auto px-5 py-10"
+        >
+
+            <h2
+                className="text-3xl font-extrabold font-cairo mb-8"
+            >
+                لوحة تحكم الأدمن ⚙️
+            </h2>
+
+
+            {message && (
+
+                <div
+                    className="rounded-xl p-4 mb-6 font-bold"
+                    style={{
+                        background:"#FDFBF4",
+                        border:
+                        "1px solid rgba(22,48,42,.15)"
+                    }}
+                >
+                    {message}
+                </div>
+
+            )}
+
+
+            {/* =========================
+                SETTINGS
+            ========================= */}
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <h3 className="text-xl font-bold mb-5">
+                    ⚙️ إعدادات المنصة
+                </h3>
+
+                <Field
+                    label="اسم المنصة"
+                    value={settings.title}
+                    onChange={e=>
+                        setSettings({
+                            ...settings,
+                            title:e.target.value
+                        })
+                    }
+                />
+
+                <Field
+                    label="العنوان الرئيسي"
+                    value={settings.subtitle}
+                    onChange={e=>
+                        setSettings({
+                            ...settings,
+                            subtitle:e.target.value
+                        })
+                    }
+                />
+
+                <Field
+                    label="الوصف"
+                    value={settings.description}
+                    onChange={e=>
+                        setSettings({
+                            ...settings,
+                            description:e.target.value
+                        })
+                    }
+                />
+
+                <Field
+                    label="رقم التواصل"
+                    value={settings.phone}
+                    onChange={e=>
+                        setSettings({
+                            ...settings,
+                            phone:e.target.value
+                        })
+                    }
+                />
+
+                <Button
+                    variant="accent"
+                    disabled={settingsLoading}
+                    onClick={saveSettings}
+                >
+                    {settingsLoading
+                        ? "جاري الحفظ..."
+                        : "💾 حفظ الإعدادات"
+                    }
+                </Button>
+
+            </div>
+
+
+            {/* =========================
+                STUDENTS
+            ========================= */}
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <div className="flex justify-between items-center mb-5">
+
+                    <h3 className="text-xl font-bold">
+                        👨‍🎓 الطلاب
+                    </h3>
+
+                    <Button
+                        variant="outline"
+                        onClick={loadStudents}
+                    >
+                        🔄 تحديث
+                    </Button>
+
+                </div>
+
+
+                {loadingStudents ? (
+
+                    <p className="font-bold">
+                        جاري تحميل الطلاب...
+                    </p>
+
+                ) : students.length===0 ? (
+
+                    <p className="font-bold">
+                        لا يوجد طلاب مسجلين حتى الآن.
+                    </p>
+
+                ) : (
+
+                    <div className="grid gap-4">
+
+                        {students.map(student=>(
+
+                            <div
+                                key={student.id}
+                                className="rounded-2xl p-5"
+                                style={{
+                                    background:"#EEF0EA",
+                                    border:
+                                    "1px solid rgba(22,48,42,.1)"
+                                }}
+                            >
+
+                                <div className="mb-4">
+
+                                    <p className="font-bold text-lg">
+                                        {student.full_name}
+                                    </p>
+
+                                    <p className="text-sm">
+                                        📧 {student.email}
+                                    </p>
+
+                                    <p className="text-sm">
+                                        🎓 رقم الطالب:
+                                        {" "}
+                                        {student.student_number}
+                                    </p>
+
+                                    <p className="text-sm">
+                                        📞 ولي الأمر:
+                                        {" "}
+                                        {student.parent_number}
+                                    </p>
+
+                                    <p className="text-sm">
+                                        🔑 كود الطالب:
+                                        {" "}
+                                        {student.student_code}
+                                    </p>
+
+                                </div>
+
+
+                                <div className="grid gap-3">
+
+                                    {lessons.map(lesson=>{
+
+                                        const item =
+                                        allAccess.find(
+                                            x=>
+                                            x.student_id===student.id &&
+                                            x.lesson_id===lesson.id
+                                        );
+
+                                        const status =
+                                        item?.status ||
+                                        "locked";
+
+                                        return(
+
+                                            <div
+                                                key={lesson.id}
+                                                className="rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                                                style={{
+                                                    background:"#FDFBF4"
+                                                }}
+                                            >
+
+                                                <div>
+
+                                                    <p className="font-bold">
+                                                        {lesson.title}
+                                                    </p>
+
+                                                    <p
+                                                        className="text-sm"
+                                                        style={{
+                                                            color:
+                                                            status==="unlocked"
+                                                            ? "#4C8C63"
+                                                            : status==="completed"
+                                                            ? "#3E6E8E"
+                                                            : "#E85C41"
+                                                        }}
+                                                    >
+                                                        {status==="unlocked"
+                                                        ? "🔓 مفتوحة"
+                                                        : status==="completed"
+                                                        ? "✅ مكتملة"
+                                                        : "🔒 مقفولة"
+                                                        }
+                                                    </p>
+
+                                                </div>
+
+
+                                                <div className="flex gap-2">
+
+                                                    <Button
+                                                        variant="accent"
+                                                        onClick={()=>
+                                                            openLesson(
+                                                                student.id,
+                                                                lesson.id
+                                                            )
+                                                        }
+                                                    >
+                                                        🔓 فتح
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="danger"
+                                                        onClick={()=>
+                                                            closeLesson(
+                                                                student.id,
+                                                                lesson.id
+                                                            )
+                                                        }
+                                                    >
+                                                        🔒 قفل
+                                                    </Button>
+
+                                                </div>
+
+                                            </div>
+
+                                        );
+
+                                    })}
+
+                                </div>
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                )}
+
+            </div>
+
+
+            {/* =========================
+                ADD LESSON
+            ========================= */}
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <h3 className="text-xl font-bold mb-5">
+                    ➕ إضافة حصة
+                </h3>
+
+                <Field
+                    label="عنوان الحصة"
+                    value={title}
+                    onChange={e=>
+                        setTitle(e.target.value)
+                    }
+                    placeholder="Present Simple"
+                />
+
+                <Field
+                    label="الوصف"
+                    value={description}
+                    onChange={e=>
+                        setDescription(e.target.value)
+                    }
+                />
+
+                <Field
+                    label="رابط الفيديو"
+                    value={video}
+                    onChange={e=>
+                        setVideo(e.target.value)
+                    }
+                    placeholder="https://www.youtube.com/watch?v=..."
+                />
+
+                <Button
+                    onClick={addLesson}
+                >
+                    ➕ إضافة الحصة
+                </Button>
+
+            </div>
+
+
+            {/* =========================
+                CODES
+            ========================= */}
+
+            <div
+                className="rounded-2xl p-6 mb-8"
+                style={{
+                    background:"#FDFBF4",
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <h3 className="text-xl font-bold mb-5">
+                    🎟️ إنشاء أكواد
+                </h3>
+
+                <select
+                    value={selected}
+                    onChange={e=>
+                        setSelected(e.target.value)
+                    }
+                    className="w-full rounded-xl px-4 py-3 mb-4"
+                    style={{
+                        border:
+                        "1px solid rgba(22,48,42,.2)",
+                        background:"#FDFBF4"
+                    }}
+                >
+
+                    <option value="">
+                        اختر الحصة
+                    </option>
+
+                    {lessons.map(l=>(
+
+                        <option
+                            key={l.id}
+                            value={l.id}
+                        >
+                            {l.title}
+                        </option>
+
+                    ))}
+
+                </select>
+
+                <Field
+                    label="عدد الأكواد"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={codes}
+                    onChange={e=>
+                        setCodes(e.target.value)
+                    }
+                />
+
+                <Button
+                    variant="accent"
+                    onClick={generateCodes}
+                >
+                    🎲 إنشاء الأكواد
+                </Button>
+
+            </div>
+
+
+            {/* =========================
+                LESSONS
+            ========================= */}
+
+            <div>
+
+                <h3 className="text-xl font-bold mb-4">
+                    📚 الحصص الحالية
+                </h3>
+
+                <div className="grid gap-3">
+
+                    {lessons.map(l=>(
+
+                        <div
+                            key={l.id}
+                            className="rounded-xl p-4 flex justify-between items-center gap-3"
+                            style={{
+                                background:"#FDFBF4",
+                                border:
+                                "1px solid rgba(22,48,42,.12)"
+                            }}
+                        >
+
+                            <div>
+
+                                <p className="font-bold">
+                                    {l.title}
+                                </p>
+
+                                <p
+                                    className="text-sm"
+                                    style={{
+                                        color:"#6B675C"
+                                    }}
+                                >
+                                    {l.description}
+                                </p>
+
+                            </div>
+
+                            <button
+                                onClick={()=>
+                                    deleteLesson(l.id)
+                                }
+                                className="font-bold"
+                                style={{
                                     color:"#E85C41"
                                 }}
                             >
@@ -1802,7 +2629,7 @@ function AdminDashboard({
         </div>
 
     );
-}
+             }
 
 
 /* =====================================================
