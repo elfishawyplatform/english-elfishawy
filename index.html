@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -11,8 +11,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Babel Translator for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -340,6 +338,7 @@
         function StudentDashboard({ student, lessons, access, onRedeem, onOpenLesson }) {
             const [codeInputs, setCodeInputs] = useState({});
             const [msg, setMsg] = useState({});
+            const [searchTerm, setSearchTerm] = useState("");
 
             const submitCode = (lessonId) => {
                 const code = (codeInputs[lessonId] || "").trim();
@@ -348,50 +347,72 @@
                 setMsg((m) => ({ ...m, [lessonId]: result }));
             };
 
+            const filteredLessons = lessons.filter(
+                (lesson) =>
+                    lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    lesson.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
             return (
                 <div className="max-w-3xl mx-auto px-5 py-10">
                     <h2 className="text-2xl font-extrabold mb-1 font-cairo" style={{ color: "#16302A" }}>أهلاً {student.fullName.split(" ")[0]} 👋</h2>
                     <p className="text-sm mb-6" style={{ color: "#6B675C" }}>كود حسابك الخاص: <span className="font-extrabold" style={{ color: "#3E6E8E" }}>{student.code}</span></p>
 
+                    <!-- شريط البحث -->
+                    <div className="mb-6 relative">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="🔍 ابحث باسم الحصة أو العنوان..."
+                            className="w-full rounded-xl px-4 py-3 outline-none text-right shadow-sm focus:ring-2"
+                            style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#FDFBF4", color: "#16302A" }}
+                        />
+                    </div>
+
                     <div className="grid gap-4">
-                        {lessons.map((lesson) => {
-                            const status = access[accessKey(student.id, lesson.id)]?.status || "locked";
-                            return (
-                                <div key={lesson.id} className="rounded-xl p-5" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xl">{status === "locked" ? "🔒" : status === "unlocked" ? "🔓" : "✅"}</span>
-                                            <div>
-                                                <h3 className="font-bold font-cairo" style={{ color: "#16302A" }}>{lesson.title}</h3>
-                                                <p className="text-sm" style={{ color: "#6B675C" }}>{lesson.description}</p>
+                        {filteredLessons.length === 0 ? (
+                            <p className="text-center py-6 font-bold" style={{ color: "#6B675C" }}>مفيش حصص بالاسم ده 🤔</p>
+                        ) : (
+                            filteredLessons.map((lesson) => {
+                                const status = access[accessKey(student.id, lesson.id)]?.status || "locked";
+                                return (
+                                    <div key={lesson.id} className="rounded-xl p-5" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xl">{status === "locked" ? "🔒" : status === "unlocked" ? "🔓" : "✅"}</span>
+                                                <div>
+                                                    <h3 className="font-bold font-cairo" style={{ color: "#16302A" }}>{lesson.title}</h3>
+                                                    <p className="text-sm" style={{ color: "#6B675C" }}>{lesson.description}</p>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {status === "locked" && (
+                                            <div className="mt-4 flex items-center gap-2">
+                                                <input
+                                                    value={codeInputs[lesson.id] || ""}
+                                                    onChange={(e) => setCodeInputs((c) => ({ ...c, [lesson.id]: e.target.value }))}
+                                                    placeholder="اكتب كود الحصة هنا"
+                                                    className="flex-1 rounded-lg px-3 py-2 text-right outline-none"
+                                                    style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#F7F3E8" }}
+                                                />
+                                                <Button variant="accent" onClick={() => submitCode(lesson.id)}>🔑 فتح</Button>
+                                            </div>
+                                        )}
+                                        {msg[lesson.id] === "invalid" && (
+                                            <p className="mt-2 text-sm font-bold" style={{ color: "#E85C41" }}>الكود غلط أو مستخدم قبل كده</p>
+                                        )}
+
+                                        {(status === "unlocked" || status === "completed") && (
+                                            <div className="mt-4">
+                                                <Button variant="primary" onClick={() => onOpenLesson(lesson)}>▶ ادخل الحصة</Button>
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {status === "locked" && (
-                                        <div className="mt-4 flex items-center gap-2">
-                                            <input
-                                                value={codeInputs[lesson.id] || ""}
-                                                onChange={(e) => setCodeInputs((c) => ({ ...c, [lesson.id]: e.target.value }))}
-                                                placeholder="اكتب كود الحصة هنا"
-                                                className="flex-1 rounded-lg px-3 py-2 text-right outline-none"
-                                                style={{ border: "1px solid rgba(22,48,42,0.2)", background: "#F7F3E8" }}
-                                            />
-                                            <Button variant="accent" onClick={() => submitCode(lesson.id)}>🔑 فتح</Button>
-                                        </div>
-                                    )}
-                                    {msg[lesson.id] === "invalid" && (
-                                        <p className="mt-2 text-sm font-bold" style={{ color: "#E85C41" }}>الكود غلط أو مستخدم قبل كده</p>
-                                    )}
-
-                                    {(status === "unlocked" || status === "completed") && (
-                                        <div className="mt-4">
-                                            <Button variant="primary" onClick={() => onOpenLesson(lesson)}>▶ ادخل الحصة</Button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             );
@@ -559,13 +580,33 @@
         function AdminLessons({ data, mutate }) {
             const [title, setTitle] = useState("");
             const [description, setDescription] = useState("");
+            const [uploadMode, setUploadMode] = useState("link");
             const [videoUrl, setVideoUrl] = useState("");
+            const [fileStatus, setFileStatus] = useState("");
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > 15 * 1024 * 1024) {
+                    setFileStatus("⚠️ حجم الفيديو كبير جداً بالنسبة للرفع المباشر (يفضل أقل من 15 ميجا لتجنب امتلئ مساحة المتصفح). الأفضل استخدامه عن طريق لينك يوتيوب.");
+                    return;
+                }
+
+                setFileStatus("جاري تحضير الفيديو...");
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    setVideoUrl(event.target.result);
+                    setFileStatus("✓ تم اختيار الفيديو جاهز للإضافة");
+                };
+                reader.readAsDataURL(file);
+            };
 
             const addLesson = () => {
                 if (!title.trim()) return;
                 const lesson = { id: genId("l"), title: title.trim(), description: description.trim(), videoUrl: videoUrl.trim() };
                 mutate({ ...data, lessons: [...data.lessons, lesson] });
-                setTitle(""); setDescription(""); setVideoUrl("");
+                setTitle(""); setDescription(""); setVideoUrl(""); setFileStatus("");
             };
 
             const deleteLesson = (id) => {
@@ -578,7 +619,30 @@
                     <div className="rounded-xl p-4 mb-6" style={{ background: "#FDFBF4", border: "1px solid rgba(22,48,42,0.12)" }}>
                         <Field label="عنوان الحصة" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: Present Continuous" />
                         <Field label="وصف مختصر" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="عن إيه الحصة" />
-                        <Field label="رابط فيديو الحصة (يوتيوب أو رابط مباشر)" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-bold mb-2" style={{ color: "#16302A" }}>طريقة إضافة الفيديو:</label>
+                            <div className="flex gap-4 mb-3">
+                                <label className="flex items-center gap-1 cursor-pointer text-sm font-bold">
+                                    <input type="radio" name="uploadMode" value="link" checked={uploadMode === "link"} onChange={() => { setUploadMode("link"); setVideoUrl(""); setFileStatus(""); }} />
+                                    رابط لينك (YouTube / MP4)
+                                </label>
+                                <label className="flex items-center gap-1 cursor-pointer text-sm font-bold">
+                                    <input type="radio" name="uploadMode" value="file" checked={uploadMode === "file"} onChange={() => { setUploadMode("file"); setVideoUrl(""); setFileStatus(""); }} />
+                                    رفع ملف من الموبايل/الجاليري
+                                </label>
+                            </div>
+
+                            {uploadMode === "link" ? (
+                                <Field label="رابط فيديو الحصة" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+                            ) : (
+                                <div className="mt-2">
+                                    <input type="file" accept="video/*" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#16302A] file:text-white hover:file:bg-opacity-90"/>
+                                    {fileStatus && <p className="text-xs font-bold mt-2" style={{ color: fileStatus.startsWith("⚠️") ? "#E85C41" : "#4C8C63" }}>{fileStatus}</p>}
+                                </div>
+                            )}
+                        </div>
+
                         <Button variant="primary" onClick={addLesson}>➕ إضافة حصة</Button>
                     </div>
                     <div className="grid gap-3">
