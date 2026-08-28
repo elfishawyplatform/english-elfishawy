@@ -21,16 +21,20 @@ body{
     background:#EEF0EA;
     color:#16302A;
 }
+
 h1,h2,h3,h4,.font-cairo{
     font-family:'Cairo',sans-serif;
 }
+
 button{
     cursor:pointer;
 }
-.no-select{
-    user-select:none;
-    -webkit-user-select:none;
+
+button:disabled{
+    opacity:.6;
+    cursor:not-allowed;
 }
+
 input,select{
     box-sizing:border-box;
 }
@@ -38,11 +42,17 @@ input,select{
 </head>
 
 <body>
+
 <div id="root"></div>
 
 <script type="text/babel">
 
 const {useState,useEffect} = React;
+
+
+/* =====================================================
+   SUPABASE
+===================================================== */
 
 const SUPABASE_URL =
 "https://fspatqdkbsloohyvpvgn.supabase.co";
@@ -60,42 +70,88 @@ const ADMIN_EMAIL =
 "maryammostafa208125@gmail.com";
 
 
-/* =========================
+/* =====================================================
    HELPERS
-========================= */
+===================================================== */
 
 function genCode(){
-    const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
     let s="";
+
     for(let i=0;i<8;i++){
-        if(i===4)s+="-";
-        s+=chars[Math.floor(Math.random()*chars.length)];
+
+        if(i===4){
+            s+="-";
+        }
+
+        s += chars[
+            Math.floor(Math.random()*chars.length)
+        ];
     }
+
     return "EF-"+s;
 }
 
-function Button({children,variant="primary",...props}){
+
+function getYoutubeEmbed(url){
+
+    if(!url){
+        return "";
+    }
+
+    const match =
+    url.match(
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/
+    );
+
+    if(!match){
+        return url;
+    }
+
+    return "https://www.youtube.com/embed/"+match[1];
+}
+
+
+/* =====================================================
+   UI COMPONENTS
+===================================================== */
+
+function Button({
+    children,
+    variant="primary",
+    ...props
+}){
+
     const styles={
+
         primary:{
             background:"#16302A",
             color:"#FDFBF4"
         },
+
         accent:{
             background:"#F2C744",
             color:"#16302A"
         },
+
         outline:{
             background:"transparent",
             color:"#16302A",
             border:"2px solid #16302A"
         },
+
         danger:{
             background:"#E85C41",
             color:"#fff"
         }
+
     };
 
     return(
+
         <button
             {...props}
             className="rounded-full px-5 py-2.5 font-bold text-sm transition active:scale-95"
@@ -103,15 +159,19 @@ function Button({children,variant="primary",...props}){
         >
             {children}
         </button>
+
     );
 }
 
+
 function Field({label,...props}){
+
     return(
+
         <label className="block mb-4">
+
             <span
                 className="block text-sm font-bold mb-1"
-                style={{color:"#16302A"}}
             >
                 {label}
             </span>
@@ -125,18 +185,25 @@ function Field({label,...props}){
                     color:"#16302A"
                 }}
             />
+
         </label>
+
     );
 }
 
 
-/* =========================
+/* =====================================================
    HEADER
-========================= */
+===================================================== */
 
-function Header({user,onLogout,onHome}){
+function Header({
+    user,
+    onLogout,
+    onHome
+}){
 
     return(
+
         <header
             className="sticky top-0 z-50"
             style={{
@@ -145,41 +212,52 @@ function Header({user,onLogout,onHome}){
             }}
         >
 
-            <div className="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
+            <div
+                className="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center"
+            >
 
                 <button
                     onClick={onHome}
                     className="text-xl font-extrabold font-cairo"
-                    style={{color:"#F2C744"}}
+                    style={{
+                        color:"#F2C744"
+                    }}
                 >
                     English Elfishawy
                 </button>
 
                 {user && (
+
                     <button
                         onClick={onLogout}
                         className="text-white font-bold text-sm"
                     >
                         خروج
                     </button>
+
                 )}
 
             </div>
+
         </header>
+
     );
 }
 
 
-/* =========================
+/* =====================================================
    LANDING
-========================= */
+===================================================== */
 
 function Landing({go}){
 
     return(
+
         <div>
 
-            <section className="text-center px-5 py-20">
+            <section
+                className="text-center px-5 py-20"
+            >
 
                 <div
                     className="inline-block rounded-full px-4 py-2 mb-5 text-sm font-bold"
@@ -193,21 +271,26 @@ function Landing({go}){
 
                 <h1
                     className="text-4xl md:text-6xl font-extrabold font-cairo"
-                    style={{color:"#16302A"}}
                 >
                     اتعلم English بطريقة أذكى
                 </h1>
 
                 <p
                     className="max-w-xl mx-auto mt-6 text-lg"
-                    style={{color:"#5C5A51"}}
+                    style={{
+                        color:"#5C5A51"
+                    }}
                 >
                     دروس اللغة الإنجليزية الخاصة بـ Mr. Mostafa Elfishawy
                 </p>
 
-                <div className="flex justify-center gap-3 mt-8 flex-wrap">
+                <div
+                    className="flex justify-center gap-3 mt-8 flex-wrap"
+                >
 
-                    <Button onClick={()=>go("login")}>
+                    <Button
+                        onClick={()=>go("login")}
+                    >
                         دخول الطالب
                     </Button>
 
@@ -233,42 +316,57 @@ function Landing({go}){
             </div>
 
         </div>
+
     );
 }
 
 
-/* =========================
+/* =====================================================
    SIGNUP
-========================= */
+===================================================== */
 
-function Signup({go,onDone}){
+function Signup({
+    go,
+    onDone
+}){
 
     const [name,setName]=useState("");
     const [email,setEmail]=useState("");
     const [studentNumber,setStudentNumber]=useState("");
     const [parentNumber,setParentNumber]=useState("");
     const [password,setPassword]=useState("");
+
     const [loading,setLoading]=useState(false);
     const [error,setError]=useState("");
     const [success,setSuccess]=useState("");
+
 
     async function submit(){
 
         setError("");
         setSuccess("");
 
-        if(name.trim().split(/\s+/).length<3){
+        if(
+            name.trim().split(/\s+/).length < 3
+        ){
             setError("اكتب الاسم الثلاثي كاملًا");
             return;
         }
 
-        if(!email || !studentNumber || !parentNumber || !password){
+        if(
+            !email ||
+            !studentNumber ||
+            !parentNumber ||
+            !password
+        ){
             setError("املأ كل البيانات");
             return;
         }
 
-        if(password.length<6){
-            setError("الباسورد لازم يكون 6 حروف أو أرقام على الأقل");
+        if(password.length < 6){
+            setError(
+                "الباسورد لازم يكون 6 حروف أو أرقام على الأقل"
+            );
             return;
         }
 
@@ -276,31 +374,53 @@ function Signup({go,onDone}){
 
         try{
 
-            const {data:authData,error:authError} =
+            const {
+                data:authData,
+                error:authError
+            } =
             await supabase.auth.signUp({
-                email,
-                password
+                email:email.trim(),
+                password:password
             });
 
-            if(authError) throw authError;
-
-            if(!authData.user){
-                throw new Error("لم يتم إنشاء الحساب");
+            if(authError){
+                throw authError;
             }
 
-            const {error:studentError} =
+            if(!authData.user){
+                throw new Error(
+                    "لم يتم إنشاء الحساب"
+                );
+            }
+
+            const {
+                error:studentError
+            } =
             await supabase
             .from("students")
             .insert({
+
                 id:authData.user.id,
+
                 full_name:name.trim(),
-                student_number:studentNumber.trim(),
-                parent_number:parentNumber.trim(),
-                student_code:genCode(),
-                email:email.trim()
+
+                student_number:
+                studentNumber.trim(),
+
+                parent_number:
+                parentNumber.trim(),
+
+                student_code:
+                genCode(),
+
+                email:
+                email.trim()
+
             });
 
-            if(studentError) throw studentError;
+            if(studentError){
+                throw studentError;
+            }
 
             if(authData.session){
 
@@ -309,26 +429,36 @@ function Signup({go,onDone}){
             }else{
 
                 setSuccess(
-                    "تم إنشاء الحساب. لو طلب منك تأكيد الإيميل، أكده ثم سجل دخولك."
+                    "تم إنشاء الحساب بنجاح. افتح رسالة تأكيد الإيميل ثم سجل الدخول."
                 );
 
             }
 
         }catch(e){
 
-            setError(e.message || "حصل خطأ أثناء إنشاء الحساب");
+            setError(
+                e.message ||
+                "حصل خطأ أثناء إنشاء الحساب"
+            );
 
         }finally{
 
             setLoading(false);
 
         }
+
     }
 
-    return(
-        <div className="max-w-md mx-auto px-5 py-12">
 
-            <h2 className="text-3xl font-extrabold text-center font-cairo mb-7">
+    return(
+
+        <div
+            className="max-w-md mx-auto px-5 py-12"
+        >
+
+            <h2
+                className="text-3xl font-extrabold text-center font-cairo mb-7"
+            >
                 حساب جديد
             </h2>
 
@@ -374,36 +504,49 @@ function Signup({go,onDone}){
                     onChange={e=>setPassword(e.target.value)}
                 />
 
-                {error &&
+                {error && (
+
                     <p
                         className="text-sm font-bold mb-4"
-                        style={{color:"#E85C41"}}
+                        style={{
+                            color:"#E85C41"
+                        }}
                     >
                         {error}
                     </p>
-                }
 
-                {success &&
+                )}
+
+                {success && (
+
                     <p
                         className="text-sm font-bold mb-4"
-                        style={{color:"#4C8C63"}}
+                        style={{
+                            color:"#4C8C63"
+                        }}
                     >
                         {success}
                     </p>
-                }
+
+                )}
 
                 <Button
                     className="w-full"
                     disabled={loading}
                     onClick={submit}
                 >
-                    {loading?"جاري إنشاء الحساب...":"إنشاء الحساب"}
+                    {loading
+                        ? "جاري إنشاء الحساب..."
+                        : "إنشاء الحساب"
+                    }
                 </Button>
 
                 <button
                     onClick={()=>go("login")}
                     className="block w-full mt-5 text-sm font-bold"
-                    style={{color:"#3E6E8E"}}
+                    style={{
+                        color:"#3E6E8E"
+                    }}
                 >
                     عندك حساب؟ سجل دخولك
                 </button>
@@ -411,46 +554,211 @@ function Signup({go,onDone}){
             </div>
 
         </div>
+
     );
 }
 
 
-/* =========================
+/* =====================================================
    LOGIN
-========================= */
+===================================================== */
 
-function Login({go,onDone}){
+function Login({
+    go,
+    onDone
+}){
 
     const [email,setEmail]=useState("");
     const [password,setPassword]=useState("");
+
     const [error,setError]=useState("");
     const [loading,setLoading]=useState(false);
+
+    const [resetMode,setResetMode]=useState(false);
+
+    const [resetEmail,setResetEmail]=useState("");
+    const [resetLoading,setResetLoading]=useState(false);
+    const [resetMessage,setResetMessage]=useState("");
+
 
     async function submit(){
 
         setError("");
+
+        if(!email || !password){
+
+            setError(
+                "اكتب الإيميل والباسورد"
+            );
+
+            return;
+        }
+
         setLoading(true);
 
-        const {data,error} =
+        const {
+            data,
+            error
+        } =
         await supabase.auth.signInWithPassword({
-            email,
+
+            email:email.trim(),
+
             password
+
         });
 
         setLoading(false);
 
         if(error){
-            setError("الإيميل أو الباسورد غير صحيح");
+
+            setError(
+                "الإيميل أو الباسورد غير صحيح"
+            );
+
             return;
         }
 
         onDone(data.user);
+
     }
 
-    return(
-        <div className="max-w-md mx-auto px-5 py-14">
 
-            <h2 className="text-3xl font-extrabold text-center font-cairo mb-7">
+    async function sendReset(){
+
+        setResetMessage("");
+
+        if(!resetEmail){
+
+            setResetMessage(
+                "اكتب الإيميل الأول"
+            );
+
+            return;
+        }
+
+        setResetLoading(true);
+
+        const {
+            error
+        } =
+        await supabase.auth.resetPasswordForEmail(
+            resetEmail.trim(),
+            {
+                redirectTo:
+                window.location.origin +
+                window.location.pathname
+            }
+        );
+
+        setResetLoading(false);
+
+        if(error){
+
+            setResetMessage(
+                error.message
+            );
+
+            return;
+        }
+
+        setResetMessage(
+            "تم إرسال رسالة استرجاع الباسورد إلى إيميلك."
+        );
+
+    }
+
+
+    if(resetMode){
+
+        return(
+
+            <div
+                className="max-w-md mx-auto px-5 py-14"
+            >
+
+                <h2
+                    className="text-3xl font-extrabold text-center font-cairo mb-7"
+                >
+                    استرجاع الباسورد
+                </h2>
+
+                <div
+                    className="rounded-2xl p-6"
+                    style={{
+                        background:"#FDFBF4",
+                        border:"1px solid rgba(22,48,42,.12)"
+                    }}
+                >
+
+                    <Field
+                        label="الإيميل"
+                        type="email"
+                        value={resetEmail}
+                        onChange={e=>
+                            setResetEmail(e.target.value)
+                        }
+                        placeholder="example@gmail.com"
+                    />
+
+                    {resetMessage && (
+
+                        <p
+                            className="text-sm font-bold mb-4"
+                            style={{
+                                color:
+                                resetMessage.includes("تم")
+                                ? "#4C8C63"
+                                : "#E85C41"
+                            }}
+                        >
+                            {resetMessage}
+                        </p>
+
+                    )}
+
+                    <Button
+                        className="w-full"
+                        disabled={resetLoading}
+                        onClick={sendReset}
+                    >
+                        {resetLoading
+                            ? "جاري الإرسال..."
+                            : "إرسال رسالة الاسترجاع"
+                        }
+                    </Button>
+
+                    <button
+                        onClick={()=>{
+                            setResetMode(false);
+                            setResetMessage("");
+                        }}
+                        className="block w-full mt-5 text-sm font-bold"
+                        style={{
+                            color:"#3E6E8E"
+                        }}
+                    >
+                        ← الرجوع لتسجيل الدخول
+                    </button>
+
+                </div>
+
+            </div>
+
+        );
+
+    }
+
+
+    return(
+
+        <div
+            className="max-w-md mx-auto px-5 py-14"
+        >
+
+            <h2
+                className="text-3xl font-extrabold text-center font-cairo mb-7"
+            >
                 تسجيل الدخول
             </h2>
 
@@ -477,27 +785,49 @@ function Login({go,onDone}){
                     onChange={e=>setPassword(e.target.value)}
                 />
 
-                {error &&
+                {error && (
+
                     <p
                         className="text-sm font-bold mb-4"
-                        style={{color:"#E85C41"}}
+                        style={{
+                            color:"#E85C41"
+                        }}
                     >
                         {error}
                     </p>
-                }
+
+                )}
 
                 <Button
                     className="w-full"
                     onClick={submit}
                     disabled={loading}
                 >
-                    {loading?"جاري الدخول...":"دخول"}
+                    {loading
+                        ? "جاري الدخول..."
+                        : "دخول"
+                    }
                 </Button>
 
                 <button
-                    onClick={()=>go("signup")}
+                    onClick={()=>{
+                        setResetMode(true);
+                        setResetEmail(email);
+                    }}
                     className="block w-full mt-5 text-sm font-bold"
-                    style={{color:"#3E6E8E"}}
+                    style={{
+                        color:"#3E6E8E"
+                    }}
+                >
+                    نسيت الباسورد؟
+                </button>
+
+                <button
+                    onClick={()=>go("signup")}
+                    className="block w-full mt-3 text-sm font-bold"
+                    style={{
+                        color:"#3E6E8E"
+                    }}
                 >
                     إنشاء حساب جديد
                 </button>
@@ -505,30 +835,204 @@ function Login({go,onDone}){
             </div>
 
         </div>
+
     );
 }
 
 
-/* =========================
-   STUDENT DASHBOARD
-========================= */
+/* =====================================================
+   UPDATE PASSWORD
+===================================================== */
 
-function StudentDashboard({student,lessons,access,codes,onRefresh}){
+function UpdatePassword({
+    onDone
+}){
+
+    const [password,setPassword]=useState("");
+    const [confirm,setConfirm]=useState("");
+
+    const [error,setError]=useState("");
+    const [success,setSuccess]=useState("");
+    const [loading,setLoading]=useState(false);
+
+
+    async function update(){
+
+        setError("");
+        setSuccess("");
+
+        if(password.length < 6){
+
+            setError(
+                "الباسورد لازم يكون 6 حروف أو أرقام على الأقل"
+            );
+
+            return;
+        }
+
+        if(password !== confirm){
+
+            setError(
+                "الباسورد وتأكيد الباسورد غير متطابقين"
+            );
+
+            return;
+        }
+
+        setLoading(true);
+
+        const {
+            error
+        } =
+        await supabase.auth.updateUser({
+            password:password
+        });
+
+        setLoading(false);
+
+        if(error){
+
+            setError(
+                error.message
+            );
+
+            return;
+        }
+
+        setSuccess(
+            "تم تغيير الباسورد بنجاح ✓"
+        );
+
+        setTimeout(
+            ()=>onDone(),
+            1200
+        );
+
+    }
+
+
+    return(
+
+        <div
+            className="max-w-md mx-auto px-5 py-14"
+        >
+
+            <h2
+                className="text-3xl font-extrabold text-center font-cairo mb-7"
+            >
+                تغيير الباسورد
+            </h2>
+
+            <div
+                className="rounded-2xl p-6"
+                style={{
+                    background:"#FDFBF4",
+                    border:"1px solid rgba(22,48,42,.12)"
+                }}
+            >
+
+                <Field
+                    label="الباسورد الجديد"
+                    type="password"
+                    value={password}
+                    onChange={e=>
+                        setPassword(e.target.value)
+                    }
+                    placeholder="6 أحرف أو أكثر"
+                />
+
+                <Field
+                    label="تأكيد الباسورد"
+                    type="password"
+                    value={confirm}
+                    onChange={e=>
+                        setConfirm(e.target.value)
+                    }
+                />
+
+                {error && (
+
+                    <p
+                        className="text-sm font-bold mb-4"
+                        style={{
+                            color:"#E85C41"
+                        }}
+                    >
+                        {error}
+                    </p>
+
+                )}
+
+                {success && (
+
+                    <p
+                        className="text-sm font-bold mb-4"
+                        style={{
+                            color:"#4C8C63"
+                        }}
+                    >
+                        {success}
+                    </p>
+
+                )}
+
+                <Button
+                    className="w-full"
+                    disabled={loading}
+                    onClick={update}
+                >
+                    {loading
+                        ? "جاري تغيير الباسورد..."
+                        : "تغيير الباسورد"
+                    }
+                </Button>
+
+            </div>
+
+        </div>
+
+    );
+}
+
+
+/* =====================================================
+   STUDENT DASHBOARD
+===================================================== */
+
+function StudentDashboard({
+    student,
+    lessons,
+    access,
+    onRefresh
+}){
 
     const [code,setCode]=useState({});
     const [message,setMessage]=useState("");
     const [active,setActive]=useState(null);
 
+
     async function redeem(lesson){
 
-        const value=(code[lesson.id]||"").trim().toUpperCase();
+        setMessage("");
+
+        const value =
+        (code[lesson.id] || "")
+        .trim()
+        .toUpperCase();
 
         if(!value){
-            setMessage("اكتب الكود أولًا");
+
+            setMessage(
+                "اكتب الكود أولًا"
+            );
+
             return;
         }
 
-        const {data:found,error} =
+        const {
+            data:found,
+            error
+        } =
         await supabase
         .from("lesson_codes")
         .select("*")
@@ -538,57 +1042,111 @@ function StudentDashboard({student,lessons,access,codes,onRefresh}){
         .maybeSingle();
 
         if(error || !found){
-            setMessage("الكود غير صحيح أو مستخدم");
+
+            setMessage(
+                "الكود غير صحيح أو مستخدم"
+            );
+
             return;
         }
 
-        const {error:updateError} =
+
+        const {
+            error:updateError
+        } =
         await supabase
         .from("lesson_codes")
         .update({
+
             used:true,
+
             used_by:student.id
+
         })
-        .eq("id",found.id);
+        .eq("id",found.id)
+        .eq("used",false);
+
 
         if(updateError){
-            setMessage("حصل خطأ، حاول مرة تانية");
+
+            setMessage(
+                "حصل خطأ، حاول مرة تانية"
+            );
+
             return;
         }
 
+
+        const {
+            error:accessError
+        } =
         await supabase
         .from("lesson_access")
         .upsert({
+
             student_id:student.id,
+
             lesson_id:lesson.id,
+
             status:"unlocked"
+
         },{
-            onConflict:"student_id,lesson_id"
+            onConflict:
+            "student_id,lesson_id"
         });
 
-        setMessage("تم فتح الحصة ✓");
-        onRefresh();
+
+        if(accessError){
+
+            setMessage(
+                "الكود اتقبل لكن حصل خطأ في فتح الحصة."
+            );
+
+            return;
+        }
+
+
+        setMessage(
+            "تم فتح الحصة ✓"
+        );
+
+        setCode({
+            ...code,
+            [lesson.id]:""
+        });
+
+        await onRefresh();
+
     }
+
 
     async function complete(lesson){
 
         await supabase
         .from("lesson_access")
-        .update({status:"completed"})
+        .update({
+            status:"completed"
+        })
         .eq("student_id",student.id)
         .eq("lesson_id",lesson.id);
 
-        onRefresh();
+        await onRefresh();
+
     }
+
 
     if(active){
 
-        const item=access.find(
+        const item =
+        access.find(
             x=>x.lesson_id===active.id
         );
 
         return(
-            <div className="max-w-4xl mx-auto px-5 py-10">
+
+            <div
+                className="max-w-4xl mx-auto px-5 py-10"
+            >
 
                 <button
                     onClick={()=>setActive(null)}
@@ -599,160 +1157,214 @@ function StudentDashboard({student,lessons,access,codes,onRefresh}){
 
                 <div
                     className="rounded-2xl p-6 mb-5"
-                    style={{background:"#16302A"}}
+                    style={{
+                        background:"#16302A"
+                    }}
                 >
-                    <h2 className="text-2xl font-extrabold text-white font-cairo">
+
+                    <h2
+                        className="text-2xl font-extrabold text-white font-cairo"
+                    >
                         {active.title}
                     </h2>
 
-                    <p className="text-white/70 mt-2">
+                    <p
+                        className="text-white/70 mt-2"
+                    >
                         {active.description}
                     </p>
+
                 </div>
 
                 <div
                     className="rounded-2xl overflow-hidden"
-                    style={{background:"#FDFBF4"}}
+                    style={{
+                        background:"#FDFBF4"
+                    }}
                 >
 
                     {active.video_url ? (
 
                         <div
                             className="relative"
-                            style={{paddingTop:"56.25%"}}
+                            style={{
+                                paddingTop:"56.25%"
+                            }}
                         >
 
                             <iframe
                                 className="absolute inset-0 w-full h-full"
-                                src={getYoutubeEmbed(active.video_url)}
+                                src={getYoutubeEmbed(
+                                    active.video_url
+                                )}
                                 title={active.title}
                                 allowFullScreen
                             />
 
                         </div>
 
-                    ):(
-                        <div className="p-10 text-center font-bold">
+                    ) : (
+
+                        <div
+                            className="p-10 text-center font-bold"
+                        >
                             محتوى الحصة هيتضاف قريبًا من الأستاذ.
                         </div>
+
                     )}
 
                 </div>
 
-                {item?.status!=="completed" && (
+                {item?.status !== "completed" && (
 
                     <div className="mt-6">
+
                         <Button
                             variant="accent"
-                            onClick={()=>complete(active)}
+                            onClick={()=>
+                                complete(active)
+                            }
                         >
                             ✅ أنهيت الحصة
                         </Button>
+
                     </div>
 
                 )}
 
             </div>
+
         );
     }
 
-    return(
-        <div className="max-w-4xl mx-auto px-5 py-10">
 
-            <h2 className="text-3xl font-extrabold font-cairo">
+    return(
+
+        <div
+            className="max-w-4xl mx-auto px-5 py-10"
+        >
+
+            <h2
+                className="text-3xl font-extrabold font-cairo"
+            >
                 أهلاً {student.full_name.split(" ")[0]} 👋
             </h2>
 
             <p
                 className="mt-2 mb-8"
-                style={{color:"#6B675C"}}
+                style={{
+                    color:"#6B675C"
+                }}
             >
-                كود الطالب: <b>{student.student_code}</b>
+                كود الطالب:
+                {" "}
+                <b>
+                    {student.student_code}
+                </b>
             </p>
 
             {message && (
+
                 <div
                     className="rounded-xl p-3 mb-5 font-bold"
                     style={{
                         background:"#FDFBF4",
-                        border:"1px solid rgba(22,48,42,.15)"
+                        border:
+                        "1px solid rgba(22,48,42,.15)"
                     }}
                 >
                     {message}
                 </div>
+
             )}
 
             <div className="grid gap-4">
 
                 {lessons.map(lesson=>{
 
-                    const item=access.find(
+                    const item =
+                    access.find(
                         x=>x.lesson_id===lesson.id
                     );
 
-                    const status=item?.status || "locked";
+                    const status =
+                    item?.status || "locked";
+
 
                     return(
+
                         <div
                             key={lesson.id}
                             className="rounded-2xl p-5"
                             style={{
                                 background:"#FDFBF4",
-                                border:"1px solid rgba(22,48,42,.12)"
+                                border:
+                                "1px solid rgba(22,48,42,.12)"
                             }}
                         >
 
-                            <div className="flex justify-between gap-4">
+                            <h3
+                                className="text-lg font-bold font-cairo"
+                            >
+                                {status==="locked"
+                                    ? "🔒"
+                                    : status==="completed"
+                                    ? "✅"
+                                    : "🔓"
+                                }
+                                {" "}
+                                {lesson.title}
+                            </h3>
 
-                                <div>
+                            <p
+                                className="text-sm mt-1"
+                                style={{
+                                    color:"#6B675C"
+                                }}
+                            >
+                                {lesson.description}
+                            </p>
 
-                                    <h3 className="text-lg font-bold font-cairo">
-                                        {status==="locked"?"🔒":
-                                         status==="completed"?"✅":"🔓"}
-                                        {" "}
-                                        {lesson.title}
-                                    </h3>
-
-                                    <p
-                                        className="text-sm mt-1"
-                                        style={{color:"#6B675C"}}
-                                    >
-                                        {lesson.description}
-                                    </p>
-
-                                </div>
-
-                            </div>
 
                             {status==="locked" && (
 
-                                <div className="flex gap-2 mt-4">
+                                <div
+                                    className="flex gap-2 mt-4"
+                                >
 
                                     <input
-                                        value={code[lesson.id]||""}
+                                        value={
+                                            code[lesson.id] || ""
+                                        }
                                         onChange={e=>
                                             setCode({
                                                 ...code,
-                                                [lesson.id]:e.target.value
+                                                [lesson.id]:
+                                                e.target.value
                                             })
                                         }
                                         placeholder="كود الحصة"
                                         className="flex-1 rounded-xl px-4 py-2 outline-none"
                                         style={{
                                             background:"#F7F3E8",
-                                            border:"1px solid rgba(22,48,42,.2)"
+                                            border:
+                                            "1px solid rgba(22,48,42,.2)"
                                         }}
                                     />
 
                                     <Button
                                         variant="accent"
-                                        onClick={()=>redeem(lesson)}
+                                        onClick={()=>
+                                            redeem(lesson)
+                                        }
                                     >
                                         🔑 فتح
                                     </Button>
 
                                 </div>
+
                             )}
+
 
                             {(status==="unlocked" ||
                               status==="completed") && (
@@ -760,7 +1372,9 @@ function StudentDashboard({student,lessons,access,codes,onRefresh}){
                                 <div className="mt-4">
 
                                     <Button
-                                        onClick={()=>setActive(lesson)}
+                                        onClick={()=>
+                                            setActive(lesson)
+                                        }
                                     >
                                         ▶ دخول الحصة
                                     </Button>
@@ -770,131 +1384,285 @@ function StudentDashboard({student,lessons,access,codes,onRefresh}){
                             )}
 
                         </div>
+
                     );
+
                 })}
 
+
                 {lessons.length===0 && (
-                    <p className="text-center font-bold py-10">
+
+                    <p
+                        className="text-center font-bold py-10"
+                    >
                         مفيش حصص مضافة حاليًا.
                     </p>
+
                 )}
 
             </div>
 
         </div>
+
     );
 }
 
 
-/* =========================
-   ADMIN
-========================= */
+/* =====================================================
+   ADMIN DASHBOARD
+===================================================== */
 
-function AdminDashboard({lessons,onRefresh}){
+function AdminDashboard({
+    lessons,
+    onRefresh
+}){
 
     const [title,setTitle]=useState("");
     const [description,setDescription]=useState("");
     const [video,setVideo]=useState("");
+
     const [codes,setCodes]=useState(10);
     const [selected,setSelected]=useState("");
 
+    const [message,setMessage]=useState("");
+
+
     async function addLesson(){
 
-        if(!title.trim()) return;
+        setMessage("");
 
+        if(!title.trim()){
+
+            setMessage(
+                "اكتب عنوان الحصة"
+            );
+
+            return;
+        }
+
+        const {
+            error
+        } =
         await supabase
         .from("lessons")
         .insert({
+
             title:title.trim(),
-            description:description.trim(),
-            video_url:video.trim()
+
+            description:
+            description.trim(),
+
+            video_url:
+            video.trim()
+
         });
+
+
+        if(error){
+
+            setMessage(
+                "حصل خطأ أثناء إضافة الحصة: "+
+                error.message
+            );
+
+            return;
+        }
+
 
         setTitle("");
         setDescription("");
         setVideo("");
 
-        onRefresh();
+        setMessage(
+            "تمت إضافة الحصة ✓"
+        );
+
+        await onRefresh();
+
     }
+
 
     async function deleteLesson(id){
 
+        const confirmed =
+        confirm(
+            "هل أنت متأكد من حذف هذه الحصة؟"
+        );
+
+        if(!confirmed){
+            return;
+        }
+
+
+        const {
+            error
+        } =
         await supabase
         .from("lessons")
         .delete()
         .eq("id",id);
 
-        onRefresh();
+
+        if(error){
+
+            alert(
+                "حصل خطأ أثناء الحذف: "+
+                error.message
+            );
+
+            return;
+        }
+
+        await onRefresh();
+
     }
+
 
     async function generateCodes(){
 
-        if(!selected) return;
+        if(!selected){
 
-        const amount=Math.min(
+            alert(
+                "اختار الحصة الأول"
+            );
+
+            return;
+        }
+
+
+        const amount =
+        Math.min(
             100,
-            Math.max(1,Number(codes)||1)
+            Math.max(
+                1,
+                Number(codes) || 1
+            )
         );
 
+
         const rows=[];
+
 
         for(let i=0;i<amount;i++){
 
             rows.push({
+
                 code:genCode(),
+
                 lesson_id:selected,
+
                 used:false
+
             });
 
         }
 
+
+        const {
+            error
+        } =
         await supabase
         .from("lesson_codes")
         .insert(rows);
 
-        alert("تم إنشاء "+amount+" كود ✓");
+
+        if(error){
+
+            alert(
+                "حصل خطأ أثناء إنشاء الأكواد: "+
+                error.message
+            );
+
+            return;
+        }
+
+
+        alert(
+            "تم إنشاء "+
+            amount+
+            " كود ✓"
+        );
+
     }
 
-    return(
-        <div className="max-w-5xl mx-auto px-5 py-10">
 
-            <h2 className="text-3xl font-extrabold font-cairo mb-8">
+    return(
+
+        <div
+            className="max-w-5xl mx-auto px-5 py-10"
+        >
+
+            <h2
+                className="text-3xl font-extrabold font-cairo mb-8"
+            >
                 لوحة تحكم الأدمن ⚙️
             </h2>
+
+
+            {message && (
+
+                <div
+                    className="rounded-xl p-4 mb-6 font-bold"
+                    style={{
+                        background:"#FDFBF4",
+                        border:
+                        "1px solid rgba(22,48,42,.15)"
+                    }}
+                >
+                    {message}
+                </div>
+
+            )}
+
 
             <div
                 className="rounded-2xl p-6 mb-8"
                 style={{
                     background:"#FDFBF4",
-                    border:"1px solid rgba(22,48,42,.12)"
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
                 }}
             >
 
-                <h3 className="text-xl font-bold mb-5">
+                <h3
+                    className="text-xl font-bold mb-5"
+                >
                     إضافة حصة
                 </h3>
+
 
                 <Field
                     label="عنوان الحصة"
                     value={title}
-                    onChange={e=>setTitle(e.target.value)}
+                    onChange={e=>
+                        setTitle(e.target.value)
+                    }
                     placeholder="Present Simple"
                 />
+
 
                 <Field
                     label="الوصف"
                     value={description}
-                    onChange={e=>setDescription(e.target.value)}
+                    onChange={e=>
+                        setDescription(e.target.value)
+                    }
                 />
+
 
                 <Field
                     label="رابط الفيديو"
                     value={video}
-                    onChange={e=>setVideo(e.target.value)}
+                    onChange={e=>
+                        setVideo(e.target.value)
+                    }
                     placeholder="https://www.youtube.com/watch?v=..."
                 />
 
-                <Button onClick={addLesson}>
+
+                <Button
+                    onClick={addLesson}
+                >
                     ➕ إضافة الحصة
                 </Button>
 
@@ -905,20 +1673,27 @@ function AdminDashboard({lessons,onRefresh}){
                 className="rounded-2xl p-6 mb-8"
                 style={{
                     background:"#FDFBF4",
-                    border:"1px solid rgba(22,48,42,.12)"
+                    border:
+                    "1px solid rgba(22,48,42,.12)"
                 }}
             >
 
-                <h3 className="text-xl font-bold mb-5">
+                <h3
+                    className="text-xl font-bold mb-5"
+                >
                     🎟️ إنشاء أكواد
                 </h3>
 
+
                 <select
                     value={selected}
-                    onChange={e=>setSelected(e.target.value)}
+                    onChange={e=>
+                        setSelected(e.target.value)
+                    }
                     className="w-full rounded-xl px-4 py-3 mb-4"
                     style={{
-                        border:"1px solid rgba(22,48,42,.2)",
+                        border:
+                        "1px solid rgba(22,48,42,.2)",
                         background:"#FDFBF4"
                     }}
                 >
@@ -927,13 +1702,20 @@ function AdminDashboard({lessons,onRefresh}){
                         اختر الحصة
                     </option>
 
+
                     {lessons.map(l=>(
-                        <option key={l.id} value={l.id}>
+
+                        <option
+                            key={l.id}
+                            value={l.id}
+                        >
                             {l.title}
                         </option>
+
                     ))}
 
                 </select>
+
 
                 <Field
                     label="عدد الأكواد"
@@ -941,8 +1723,11 @@ function AdminDashboard({lessons,onRefresh}){
                     min="1"
                     max="100"
                     value={codes}
-                    onChange={e=>setCodes(e.target.value)}
+                    onChange={e=>
+                        setCodes(e.target.value)
+                    }
                 />
+
 
                 <Button
                     variant="accent"
@@ -956,19 +1741,24 @@ function AdminDashboard({lessons,onRefresh}){
 
             <div>
 
-                <h3 className="text-xl font-bold mb-4">
+                <h3
+                    className="text-xl font-bold mb-4"
+                >
                     📚 الحصص الحالية
                 </h3>
+
 
                 <div className="grid gap-3">
 
                     {lessons.map(l=>(
+
                         <div
                             key={l.id}
                             className="rounded-xl p-4 flex justify-between items-center gap-3"
                             style={{
                                 background:"#FDFBF4",
-                                border:"1px solid rgba(22,48,42,.12)"
+                                border:
+                                "1px solid rgba(22,48,42,.12)"
                             }}
                         >
 
@@ -980,22 +1770,30 @@ function AdminDashboard({lessons,onRefresh}){
 
                                 <p
                                     className="text-sm"
-                                    style={{color:"#6B675C"}}
+                                    style={{
+                                        color:"#6B675C"
+                                    }}
                                 >
                                     {l.description}
                                 </p>
 
                             </div>
 
+
                             <button
-                                onClick={()=>deleteLesson(l.id)}
+                                onClick={()=>
+                                    deleteLesson(l.id)
+                                }
                                 className="font-bold"
-                                style={{color:"#E85C41"}}
+                                style={{
+                                    color:"#E85C41"
+                                }}
                             >
                                 حذف 🗑️
                             </button>
 
                         </div>
+
                     ))}
 
                 </div>
@@ -1003,165 +1801,157 @@ function AdminDashboard({lessons,onRefresh}){
             </div>
 
         </div>
+
     );
 }
 
 
-/* =========================
-   YOUTUBE
-========================= */
-
-function getYoutubeEmbed(url){
-
-    if(!url) return "";
-
-    const match=url.match(
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/
-    );
-
-    if(!match) return url;
-
-    return "https://www.youtube.com/embed/"+match[1];
-}
-
-
-/* =========================
+/* =====================================================
    APP
-========================= */
+===================================================== */
 
 function App(){
 
     const [page,setPage]=useState("home");
+
     const [user,setUser]=useState(null);
     const [student,setStudent]=useState(null);
+
     const [lessons,setLessons]=useState([]);
     const [access,setAccess]=useState([]);
+
     const [loading,setLoading]=useState(true);
+
     const [admin,setAdmin]=useState(false);
+
+    const [changingPassword,setChangingPassword]=
+    useState(false);
+
+
+    /* =================================================
+       LOAD DATA
+    ================================================= */
 
     async function loadData(currentUser){
 
-        const {data:lessonData}=
+        const {
+            data:lessonData,
+            error:lessonError
+        } =
         await supabase
         .from("lessons")
         .select("*")
-        .order("created_at",{ascending:true});
+        .order(
+            "created_at",
+            {ascending:true}
+        );
 
-        setLessons(lessonData||[]);
+
+        if(!lessonError){
+
+            setLessons(
+                lessonData || []
+            );
+
+        }
+
 
         if(currentUser){
 
-            const {data:studentData}=
+            const {
+                data:studentData
+            } =
             await supabase
             .from("students")
             .select("*")
-            .eq("id",currentUser.id)
+            .eq(
+                "id",
+                currentUser.id
+            )
             .maybeSingle();
 
+
             if(studentData){
-                setStudent(studentData);
-            }
 
-            const {data:accessData}=
-            await supabase
-            .from("lesson_access")
-            .select("*")
-            .eq("student_id",currentUser.id);
-
-            setAccess(accessData||[]);
-        }
-    }
-
-    async function refresh(){
-
-        if(user){
-            await loadData(user);
-        }else{
-            await loadData(null);
-        }
-    }
-
-    useEffect(()=>{
-
-        async function start(){
-
-            const {
-                data:{session}
-            }=await supabase.auth.getSession();
-
-            if(session?.user){
-
-                setUser(session.user);
-
-                if(session.user.email===ADMIN_EMAIL){
-
-                    setAdmin(true);
-                    setPage("admin");
-
-                }else{
-
-                    setAdmin(false);
-                    setPage("student");
-
-                }
-
-                await loadData(session.user);
+                setStudent(
+                    studentData
+                );
 
             }else{
 
-                await loadData(null);
+                setStudent(null);
 
             }
 
-            setLoading(false);
+
+            const {
+                data:accessData
+            } =
+            await supabase
+            .from("lesson_access")
+            .select("*")
+            .eq(
+                "student_id",
+                currentUser.id
+            );
+
+
+            setAccess(
+                accessData || []
+            );
+
+        }else{
+
+            setStudent(null);
+            setAccess([]);
+
         }
 
-        start();
+    }
 
-        const {
-            data:{subscription}
-        }=supabase.auth.onAuthStateChange(
-            async(event,session)=>{
 
-                if(session?.user){
+    async function refresh(){
 
-                    setUser(session.user);
+        await loadData(user);
 
-                }else{
+    }
 
-                    setUser(null);
-                    setStudent(null);
-                    setAdmin(false);
-                    setPage("home");
 
-                }
-            }
-        );
-
-        return()=>subscription.unsubscribe();
-
-    },[]);
-
+    /* =================================================
+       LOGIN / USER
+    ================================================= */
 
     async function loginDone(u){
 
         setUser(u);
 
-        if(u.email===ADMIN_EMAIL){
+        const isAdmin =
+        u?.email?.toLowerCase() ===
+        ADMIN_EMAIL.toLowerCase();
 
-            setAdmin(true);
+
+        setAdmin(isAdmin);
+
+
+        if(isAdmin){
+
             setPage("admin");
 
         }else{
 
-            setAdmin(false);
             setPage("student");
 
         }
 
+
         await loadData(u);
+
     }
 
+
+    /* =================================================
+       LOGOUT
+    ================================================= */
 
     async function logout(){
 
@@ -1170,13 +1960,199 @@ function App(){
         setUser(null);
         setStudent(null);
         setAdmin(false);
+        setChangingPassword(false);
         setPage("home");
+
     }
 
+
+    /* =================================================
+       START APP
+    ================================================= */
+
+    useEffect(()=>{
+
+        let mounted=true;
+
+
+        async function start(){
+
+            const {
+                data:{session}
+            } =
+            await supabase.auth.getSession();
+
+
+            if(!mounted){
+                return;
+            }
+
+
+            if(session?.user){
+
+                setUser(
+                    session.user
+                );
+
+
+                const isAdmin =
+                session.user.email?.toLowerCase() ===
+                ADMIN_EMAIL.toLowerCase();
+
+
+                setAdmin(isAdmin);
+
+
+                if(isAdmin){
+
+                    setPage("admin");
+
+                }else{
+
+                    setPage("student");
+
+                }
+
+
+                await loadData(
+                    session.user
+                );
+
+            }else{
+
+                await loadData(null);
+
+            }
+
+
+            if(mounted){
+
+                setLoading(false);
+
+            }
+
+        }
+
+
+        start();
+
+
+        const {
+            data:{subscription}
+        } =
+        supabase.auth.onAuthStateChange(
+            async(event,session)=>{
+
+                if(!mounted){
+                    return;
+                }
+
+
+                /*
+                 * عندما يضغط المستخدم على رابط
+                 * استرجاع الباسورد من الإيميل
+                 */
+
+                if(event === "PASSWORD_RECOVERY"){
+
+                    setChangingPassword(true);
+
+                    setPage("password");
+
+                    setLoading(false);
+
+                    return;
+                }
+
+
+                if(session?.user){
+
+                    setUser(
+                        session.user
+                    );
+
+
+                    const isAdmin =
+                    session.user.email?.toLowerCase() ===
+                    ADMIN_EMAIL.toLowerCase();
+
+
+                    setAdmin(isAdmin);
+
+
+                    if(!changingPassword){
+
+                        if(isAdmin){
+
+                            setPage("admin");
+
+                        }else{
+
+                            setPage("student");
+
+                        }
+
+                    }
+
+
+                }else{
+
+                    setUser(null);
+                    setStudent(null);
+                    setAdmin(false);
+
+                    if(event === "SIGNED_OUT"){
+
+                        setPage("home");
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        return()=>{
+
+            mounted=false;
+
+            subscription.unsubscribe();
+
+        };
+
+    },[]);
+
+
+    /* =================================================
+       PASSWORD UPDATED
+    ================================================= */
+
+    function passwordUpdated(){
+
+        setChangingPassword(false);
+
+        setPage("login");
+
+        setUser(null);
+
+        setAdmin(false);
+
+        setStudent(null);
+
+        supabase.auth.signOut();
+
+    }
+
+
+    /* =================================================
+       LOADING
+    ================================================= */
 
     if(loading){
 
         return(
+
             <div
                 className="min-h-screen flex items-center justify-center font-bold text-lg"
                 style={{
@@ -1186,12 +2162,21 @@ function App(){
             >
                 جاري تحميل المنصة...
             </div>
+
         );
+
     }
 
 
+    /* =================================================
+       RENDER
+    ================================================= */
+
     return(
-        <div className="min-h-screen">
+
+        <div
+            className="min-h-screen"
+        >
 
             <Header
                 user={user}
@@ -1199,59 +2184,125 @@ function App(){
                 onHome={()=>setPage("home")}
             />
 
-            {page==="home" &&
-                <Landing go={setPage}/>
-            }
 
-            {page==="signup" &&
+            {page==="home" && (
+
+                <Landing
+                    go={setPage}
+                />
+
+            )}
+
+
+            {page==="signup" && (
+
                 <Signup
                     go={setPage}
                     onDone={loginDone}
                 />
-            }
 
-            {page==="login" &&
+            )}
+
+
+            {page==="login" && (
+
                 <Login
                     go={setPage}
                     onDone={loginDone}
                 />
-            }
+
+            )}
+
+
+            {page==="password" && (
+
+                <UpdatePassword
+                    onDone={passwordUpdated}
+                />
+
+            )}
+
 
             {page==="student" &&
              user &&
-             student &&
+             !admin &&
+             student && (
+
                 <StudentDashboard
                     student={student}
                     lessons={lessons}
                     access={access}
                     onRefresh={refresh}
                 />
-            }
+
+            )}
+
+
+            {page==="student" &&
+             user &&
+             !admin &&
+             !student && (
+
+                <div
+                    className="max-w-md mx-auto px-5 py-20 text-center"
+                >
+
+                    <h2
+                        className="text-2xl font-bold font-cairo mb-3"
+                    >
+                        الحساب موجود لكن بيانات الطالب ناقصة
+                    </h2>
+
+                    <p>
+                        تواصلي مع الإدارة لإكمال بيانات الحساب.
+                    </p>
+
+                </div>
+
+            )}
+
 
             {page==="admin" &&
              user &&
-             admin &&
+             admin && (
+
                 <AdminDashboard
                     lessons={lessons}
                     onRefresh={refresh}
                 />
-            }
+
+            )}
+
 
             <footer
                 className="text-center py-10 text-sm font-bold"
-                style={{color:"#6B675C"}}
+                style={{
+                    color:"#6B675C"
+                }}
             >
                 English Elfishawy © 2026
             </footer>
 
         </div>
+
     );
+
 }
 
+
+/* =====================================================
+   START
+===================================================== */
+
 ReactDOM
-.createRoot(document.getElementById("root"))
-.render(<App/>);
+.createRoot(
+    document.getElementById("root")
+)
+.render(
+    <App/>
+);
 
 </script>
+
 </body>
 </html>
