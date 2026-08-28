@@ -15,36 +15,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
-body {
-    font-family: 'Tajawal', sans-serif;
+body{
+    margin:0;
+    font-family:'Tajawal',sans-serif;
     background:#EEF0EA;
     color:#16302A;
 }
-h1,h2,h3,h4,.font-cairo {
+h1,h2,h3,h4{
     font-family:'Cairo',sans-serif;
 }
-button {
+button{
     cursor:pointer;
-}
-.no-select {
-    user-select:none;
-    -webkit-user-select:none;
 }
 </style>
 </head>
 
 <body>
+
 <div id="root"></div>
 
 <script type="text/babel">
 
 const {useState,useEffect} = React;
 
+/* =========================
+   SUPABASE
+========================= */
+
 const SUPABASE_URL =
 "https://fspatqdkbsloohyvpvgn.supabase.co";
 
 const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzcGF0cWRrYnNsb29oeXZwdmduIiwic3ViIjoiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NzA3NTMsImV4cCI6MjEwMzQ0Njc1M30.Ml4WWKLHFqZeNSG-C1wIfII8bofKrjPBHQWH9QrInng";
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzcGF0cWRrYnNsb29oeXZwdmduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NzA3NTMsImV4cCI6MjEwMzQ0Njc1M30.Ml4WWKLHFqZeNSG-C1wIfII8bofKrjPBHQWH9QrInng";
 
 const supabase =
 window.supabase.createClient(
@@ -52,85 +54,59 @@ window.supabase.createClient(
     SUPABASE_ANON_KEY
 );
 
-const ADMIN_EMAIL =
-"maryammostafa208125@gmail.com";
 
-function genCode(){
+/* =========================
+   HELPERS
+========================= */
 
+function generateCode(){
     const chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     let result="";
 
     for(let i=0;i<8;i++){
-
-        if(i===4)
-            result+="-";
-
-        result +=
-        chars[Math.floor(Math.random()*chars.length)];
+        if(i===4) result+="-";
+        result += chars[
+            Math.floor(Math.random()*chars.length)
+        ];
     }
 
     return "EF-"+result;
 }
 
-function Field({label,...props}){
 
-    return(
-        <label className="block mb-4">
+/* =========================
+   BUTTON
+========================= */
 
-            <span className="block font-bold text-sm mb-2">
-                {label}
-            </span>
-
-            <input
-                {...props}
-                className="w-full rounded-xl px-4 py-3 outline-none"
-                style={{
-                    background:"#FDFBF4",
-                    border:"1px solid rgba(22,48,42,.2)"
-                }}
-            />
-
-        </label>
-    );
-}
-
-function Button({
-    children,
-    variant="primary",
-    ...props
-}){
+function Button({children,onClick,variant="primary",type="button"}){
 
     const styles={
-
         primary:{
             background:"#16302A",
-            color:"#FDFBF4"
+            color:"#fff"
         },
-
         accent:{
             background:"#F2C744",
             color:"#16302A"
         },
-
-        danger:{
-            background:"#E85C41",
-            color:"white"
-        },
-
         outline:{
-            background:"transparent",
+            background:"#fff",
             color:"#16302A",
             border:"2px solid #16302A"
+        },
+        danger:{
+            background:"#E85C41",
+            color:"#fff"
         }
-
     };
 
     return(
         <button
-            {...props}
-            className="rounded-full px-5 py-3 font-bold text-sm disabled:opacity-50"
+            type={type}
+            onClick={onClick}
+            className="rounded-full px-5 py-3 font-bold transition active:scale-95"
             style={styles[variant]}
         >
             {children}
@@ -138,499 +114,9 @@ function Button({
     );
 }
 
-function Header({user,onLogout,navigate}){
 
-    return(
-        <header
-            className="sticky top-0 z-50"
-            style={{
-                background:"#16302A",
-                borderBottom:"3px solid #F2C744"
-            }}
-        >
+/* =========================
+   INPUT
+========================= */
 
-            <div className="max-w-6xl mx-auto px-5 py-4 flex justify-between items-center">
-
-                <button
-                    onClick={()=>navigate("home")}
-                    className="text-xl font-extrabold"
-                    style={{color:"#F2C744"}}
-                >
-                    English Elfishawy
-                </button>
-
-                <div className="flex items-center gap-4">
-
-                    {!user ? (
-
-                        <>
-                            <button
-                                onClick={()=>navigate("login")}
-                                className="text-white font-bold text-sm"
-                            >
-                                دخول الطالب
-                            </button>
-
-                            <button
-                                onClick={()=>navigate("signup")}
-                                className="text-white font-bold text-sm hidden md:block"
-                            >
-                                حساب جديد
-                            </button>
-                        </>
-
-                    ) : (
-
-                        <>
-                            <span className="text-white text-sm hidden md:block">
-                                {user.email}
-                            </span>
-
-                            <button
-                                onClick={onLogout}
-                                className="text-white font-bold"
-                            >
-                                خروج
-                            </button>
-                        </>
-
-                    )}
-
-                </div>
-
-            </div>
-
-        </header>
-    );
-}
-
-function Home({navigate}){
-
-    return(
-        <div>
-
-            <section className="max-w-4xl mx-auto text-center px-5 py-20">
-
-                <div
-                    className="inline-block rounded-full px-4 py-2 mb-5 font-bold"
-                    style={{
-                        background:"#FDFBF4"
-                    }}
-                >
-                    🔒 منصة تعليمية للحصص المحمية
-                </div>
-
-                <h1
-                    className="text-4xl md:text-6xl font-extrabold"
-                >
-                    منصة English Elfishawy
-                </h1>
-
-                <p
-                    className="mt-6 text-lg"
-                    style={{color:"#5F625B"}}
-                >
-                    تعلم الإنجليزية بطريقة منظمة، وكل طالب له حسابه وأكواد الحصص الخاصة به.
-                </p>
-
-                <div className="flex justify-center gap-3 mt-8 flex-wrap">
-
-                    <Button
-                        onClick={()=>navigate("login")}
-                    >
-                        دخول الطالب
-                    </Button>
-
-                    <Button
-                        variant="accent"
-                        onClick={()=>navigate("signup")}
-                    >
-                        إنشاء حساب
-                    </Button>
-
-                </div>
-
-            </section>
-
-        </div>
-    );
-}
-
-function Signup({navigate}){
-
-    const [name,setName]=useState("");
-    const [email,setEmail]=useState("");
-    const [studentNumber,setStudentNumber]=useState("");
-    const [parentNumber,setParentNumber]=useState("");
-    const [password,setPassword]=useState("");
-
-    const [error,setError]=useState("");
-    const [loading,setLoading]=useState(false);
-
-    async function submit(){
-
-        setError("");
-
-        if(name.trim().split(/\s+/).length<3){
-
-            setError("اكتب الاسم الثلاثي كامل.");
-
-            return;
-        }
-
-        if(!email || !studentNumber || !parentNumber || !password){
-
-            setError("املأ كل البيانات.");
-
-            return;
-        }
-
-        if(password.length<6){
-
-            setError("الباسورد لازم يكون 6 أحرف أو أرقام على الأقل.");
-
-            return;
-        }
-
-        setLoading(true);
-
-        try{
-
-            const existing =
-            await supabase
-            .from("students")
-            .select("id")
-            .eq("student_number",studentNumber)
-            .maybeSingle();
-
-            if(existing.data){
-
-                setError("رقم الطالب مستخدم بالفعل.");
-
-                setLoading(false);
-
-                return;
-            }
-
-            const {data,error} =
-            await supabase.auth.signUp({
-
-                email:email.trim(),
-                password:password
-
-            });
-
-            if(error)
-                throw error;
-
-            if(!data.user)
-                throw new Error("لم يتم إنشاء الحساب.");
-
-            const code=genCode();
-
-            const insert =
-            await supabase
-            .from("students")
-            .insert({
-
-                id:data.user.id,
-                full_name:name.trim(),
-                student_number:studentNumber.trim(),
-                parent_number:parentNumber.trim(),
-                student_code:code
-
-            });
-
-            if(insert.error)
-                throw insert.error;
-
-            alert(
-                "تم إنشاء الحساب بنجاح. لو طلب منك تأكيد الإيميل، افتح رسالة Supabase في بريدك."
-            );
-
-            navigate("login");
-
-        }catch(e){
-
-            setError(e.message || "حدث خطأ أثناء إنشاء الحساب.");
-
-        }
-
-        setLoading(false);
-    }
-
-    return(
-        <div className="max-w-md mx-auto px-5 py-12">
-
-            <h2 className="text-3xl font-extrabold text-center mb-7">
-                إنشاء حساب طالب
-            </h2>
-
-            <div
-                className="rounded-2xl p-6"
-                style={{
-                    background:"#FDFBF4"
-                }}
-            >
-
-                <Field
-                    label="الاسم الثلاثي"
-                    value={name}
-                    onChange={e=>setName(e.target.value)}
-                />
-
-                <Field
-                    label="الإيميل"
-                    type="email"
-                    value={email}
-                    onChange={e=>setEmail(e.target.value)}
-                />
-
-                <Field
-                    label="رقم الطالب"
-                    value={studentNumber}
-                    onChange={e=>setStudentNumber(e.target.value)}
-                />
-
-                <Field
-                    label="رقم ولي الأمر"
-                    value={parentNumber}
-                    onChange={e=>setParentNumber(e.target.value)}
-                />
-
-                <Field
-                    label="الباسورد"
-                    type="password"
-                    value={password}
-                    onChange={e=>setPassword(e.target.value)}
-                />
-
-                {error && (
-                    <p
-                        className="font-bold text-sm mb-4"
-                        style={{color:"#E85C41"}}
-                    >
-                        {error}
-                    </p>
-                )}
-
-                <Button
-                    className="w-full"
-                    disabled={loading}
-                    onClick={submit}
-                >
-                    {loading ? "جاري إنشاء الحساب..." : "إنشاء الحساب"}
-                </Button>
-
-                <button
-                    onClick={()=>navigate("login")}
-                    className="block mx-auto mt-5 font-bold"
-                    style={{color:"#3E6E8E"}}
-                >
-                    عندك حساب؟ سجل دخول
-                </button>
-
-            </div>
-
-        </div>
-    );
-}
-
-function Login({onLogin,navigate}){
-
-    const [email,setEmail]=useState("");
-    const [password,setPassword]=useState("");
-
-    const [error,setError]=useState("");
-    const [loading,setLoading]=useState(false);
-
-    async function submit(){
-
-        setError("");
-        setLoading(true);
-
-        const {data,error} =
-        await supabase.auth.signInWithPassword({
-
-            email:email.trim(),
-            password
-
-        });
-
-        if(error){
-
-            setError("الإيميل أو الباسورد غير صحيح.");
-
-            setLoading(false);
-
-            return;
-        }
-
-        onLogin(data.user);
-
-        setLoading(false);
-    }
-
-    return(
-        <div className="max-w-md mx-auto px-5 py-14">
-
-            <h2 className="text-3xl font-extrabold text-center mb-7">
-                دخول الطالب
-            </h2>
-
-            <div
-                className="rounded-2xl p-6"
-                style={{background:"#FDFBF4"}}
-            >
-
-                <Field
-                    label="الإيميل"
-                    type="email"
-                    value={email}
-                    onChange={e=>setEmail(e.target.value)}
-                />
-
-                <Field
-                    label="الباسورد"
-                    type="password"
-                    value={password}
-                    onChange={e=>setPassword(e.target.value)}
-                    onKeyDown={e=>{
-                        if(e.key==="Enter") submit();
-                    }}
-                />
-
-                {error && (
-                    <p
-                        className="font-bold text-sm mb-4"
-                        style={{color:"#E85C41"}}
-                    >
-                        {error}
-                    </p>
-                )}
-
-                <Button
-                    className="w-full"
-                    disabled={loading}
-                    onClick={submit}
-                >
-                    {loading ? "جاري الدخول..." : "دخول"}
-                </Button>
-
-                <button
-                    onClick={()=>navigate("signup")}
-                    className="block mx-auto mt-5 font-bold"
-                    style={{color:"#3E6E8E"}}
-                >
-                    إنشاء حساب جديد
-                </button>
-
-            </div>
-
-        </div>
-    );
-}
-
-function StudentDashboard({student,onLogout}){
-
-    const [lessons,setLessons]=useState([]);
-    const [access,setAccess]=useState([]);
-    const [search,setSearch]=useState("");
-    const [active,setActive]=useState(null);
-    const [code,setCode]=useState("");
-    const [message,setMessage]=useState("");
-
-    async function load(){
-
-        const lessonsRes =
-        await supabase
-        .from("lessons")
-        .select("*")
-        .order("created_at",{ascending:true});
-
-        const accessRes =
-        await supabase
-        .from("lesson_access")
-        .select("*")
-        .eq("student_id",student.id);
-
-        setLessons(lessonsRes.data || []);
-        setAccess(accessRes.data || []);
-    }
-
-    useEffect(()=>{
-        load();
-    },[]);
-
-    function getStatus(id){
-
-        const item=access.find(
-            x=>x.lesson_id===id
-        );
-
-        return item?.status || "locked";
-    }
-
-    async function redeem(lesson){
-
-        setMessage("");
-
-        if(!code.trim())
-            return;
-
-        const {data,error} =
-        await supabase.rpc(
-            "redeem_lesson_code",
-            {
-                p_code:code.trim().toUpperCase(),
-                p_lesson_id:lesson.id
-            }
-        );
-
-        if(error){
-
-            setMessage("حصل خطأ. حاول مرة تانية.");
-
-            return;
-        }
-
-        if(!data){
-
-            setMessage("الكود غلط أو مستخدم قبل كده.");
-
-            return;
-        }
-
-        setCode("");
-        setMessage("تم فتح الحصة ✓");
-
-        load();
-    }
-
-    async function complete(){
-
-        await supabase
-        .from("lesson_access")
-        .update({status:"completed"})
-        .eq("student_id",student.id)
-        .eq("lesson_id",active.id);
-
-        setActive(null);
-
-        load();
-    }
-
-    const filtered =
-    lessons.filter(x=>
-        x.title.toLowerCase().includes(search.toLowerCase()) ||
-        (x.description||"")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-
-    if(active){
-
-        return(
-            <Lesson
-                lesson={active}
-                student={student}
+function
